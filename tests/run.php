@@ -73,6 +73,7 @@ $check(!AvailabilityService::eligible($fixtureDoctor, '2026-10-17', '09:30', $fi
 require __DIR__ . '/view-rendering.php';
 (require __DIR__ . '/duration-policy.php')($check);
 (require __DIR__ . '/login-throttle.php')($check);
+require __DIR__ . '/password-policy.php';
 session_destroy();
 
 foreach ($failures as $failure) {

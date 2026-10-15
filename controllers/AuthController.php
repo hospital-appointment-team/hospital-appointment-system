@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Hospital\Controllers;
 
-use Hospital\Core\{Auth, Controller, Request, Validation};
+use Hospital\Core\{Auth, Controller, Passwords, Request, Validation};
 use Hospital\Models\User;
 use Hospital\Services\LoginThrottle;
 
@@ -45,9 +45,7 @@ final class AuthController extends Controller
                 return;
             }
             $user = User::byEmail($data['email']);
-            // A fixed valid hash keeps missing-user verification on the password-hashing path.
-            $hash = $user['password_hash'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
-            $verified = strlen($password) <= 72 && !str_contains($password, "\0") && password_verify($password, $hash);
+            $verified = Passwords::verifyLogin($password, $user['password_hash'] ?? null);
             if (!$user || !$verified) {
                 $errors['login'] = 'Email or password is incorrect.';
             } elseif (!(bool) $user['is_active']) {

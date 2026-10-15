@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Hospital\Controllers;
 
-use Hospital\Core\{Auth, Controller, HttpException, Request, Validation};
+use Hospital\Core\{Auth, Controller, HttpException, Passwords, Request, Validation};
 use Hospital\Models\{Database, User};
 
 final class ProfileController extends Controller
@@ -31,7 +31,7 @@ final class ProfileController extends Controller
                     } else {
                         // A profile-only save must never restore a stale hash from another session.
                         User::query('UPDATE users SET name=?,phone=?,dob=? WHERE id=?', [$data['name'],$data['phone'],$data['dob'],$user['id']]);
-                        if ($new !== '') User::query('UPDATE users SET password_hash=? WHERE id=?', [password_hash($new, PASSWORD_DEFAULT),$user['id']]);
+                        if ($new !== '') User::query('UPDATE users SET password_hash=? WHERE id=?', [Passwords::hash($new),$user['id']]);
                         $db->commit();
                     }
                 } catch (\Throwable $exception) {
