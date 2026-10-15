@@ -13,6 +13,8 @@ return [
     'GET /admin' => [Hospital\Controllers\HomeController::class, 'admin'],
     'GET /admin/users' => [Hospital\Controllers\UserController::class, 'index'],
     'POST /api/users/toggle-active' => [Hospital\Controllers\UserController::class, 'toggle'],
+    'GET /admin/specializations' => [Hospital\Controllers\SpecializationController::class, 'index'],
+    'POST /admin/specializations' => [Hospital\Controllers\SpecializationController::class, 'index'],
     'GET /patient' => [Hospital\Controllers\HomeController::class, 'patient'],
     'GET /doctor/dashboard' => [Hospital\Controllers\HomeController::class, 'doctor'],
 ];
