@@ -124,7 +124,7 @@ class HospitalHTTP(unittest.TestCase):
         self.assertEqual(patient.call('/admin/users')[0], 403)
         self.assertEqual(patient.call('/doctor/dashboard')[0], 403)
         self.assertEqual(patient.call('/api/users/toggle-active', {'user_id': self.ids['patient']}, method='POST', csrf=patient.token('/patient/profile'))[0], 403)
-        self.assertEqual(patient.call('/api/users/toggle-active', {'user_id': self.ids['patient']}, method='POST', csrf='forged')[0], 419)
+        self.assertEqual(patient.call('/api/appointments/cancel', {'appointment_id': 1}, method='POST', csrf='forged')[0], 419)
         admin = Client(self.base)
         self.assertEqual(admin.login('admin', self.run)[0], 200)
         token = admin.token('/admin')
@@ -140,6 +140,25 @@ class HospitalHTTP(unittest.TestCase):
         result = admin.call('/api/doctors/stats')
         self.assertIn('application/json', result[2]['Content-Type'])
         self.assertTrue(any(int(item['id']) == self.ids['doctor_profile'] for item in json.loads(result[1])['doctors']))
+
+    def test_pages_and_booking_configuration_gate(self):
+        patient = Client(self.base)
+        patient.login('patient', self.run)
+        doctor = Client(self.base)
+        doctor.login('doctor', self.run)
+        self.assertEqual(doctor.call('/doctor/dashboard')[0], 200)
+        result = patient.call('/api/doctors')
+        self.assertTrue(json.loads(result[1])['doctors'])
+        self.assertNotIn('password_hash', result[1])
+        self.assertEqual(patient.call('/patient/appointments')[0], 200)
+        # Slot configuration is covered by pure PHP tests; no invented clinic defaults here.
+        self.assertEqual(patient.call('/api/doctors/0/slots?date=invalid')[0], 404)
+        self.assertEqual(patient.call('/.env')[0], 404)
+        self.assertEqual(patient.call('/config/database.php')[0], 404)
+        date = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=6))).date() + datetime.timedelta(days=1)
+        while date.weekday() >= 5:
+            date += datetime.timedelta(days=1)
+        self.assertEqual(patient.call(f'/api/doctors/{self.ids["doctor_profile"]}/slots?date={date}')[0], 503)
 
     def test_doctor_management_upload_and_specialization_protection(self):
         admin = Client(self.base)
@@ -172,7 +191,26 @@ class HospitalHTTP(unittest.TestCase):
         self.assertEqual(admin.call(f'/admin/doctors/{doctor_id}/deactivate', {'_csrf': token})[0], 200)
         patient = Client(self.base)
         patient.login('patient', self.run)
-        self.assertIn('Inactive', admin.call('/admin/doctors')[1])
+        self.assertNotIn('HTTP Created doctor', patient.call('/api/doctors')[1])
+
+    def test_status_endpoints_and_cancellation_reason(self):
+        doctor = Client(self.base)
+        doctor.login('doctor', self.run)
+        token = doctor.token('/doctor/dashboard')
+        result = doctor.call(f'/api/appointments/{self.ids["appointment_0"]}', {'status': 'Completed'}, method='PUT', csrf=token)
+        self.assertEqual(result[0], 200)
+        self.assertEqual(json.loads(result[1]), {'ok': True, 'new_status': 'Completed'})
+        patient = Client(self.base)
+        patient.login('patient', self.run)
+        result = patient.call('/api/appointments/cancel', {'appointment_id': self.ids['appointment_1']}, method='POST', csrf=patient.token('/patient/profile'))
+        self.assertEqual(json.loads(result[1])['new_status'], 'Cancelled')
+        admin = Client(self.base)
+        admin.login('admin', self.run)
+        token = admin.token('/admin')
+        self.assertEqual(admin.call(f'/api/appointments/{self.ids["appointment_0"]}', {'status': 'Cancelled'}, method='PUT', csrf=token)[0], 422)
+        result = admin.call(f'/api/appointments/{self.ids["appointment_0"]}', {'status': 'Cancelled', 'reason': 'HTTP integration cancellation fixture'}, method='PUT', csrf=token)
+        self.assertEqual(result[0], 200)
+        self.assertEqual(json.loads(result[1])['new_status'], 'Cancelled')
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

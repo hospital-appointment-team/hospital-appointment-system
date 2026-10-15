@@ -43,6 +43,8 @@ if status != 200:
 login = user.get('login')
 email_status, emails = get('/user/emails')
 email_verified = isinstance(emails, list) and any(item.get('email', '').casefold() == args.email.casefold() and item.get('verified') is True for item in emails)
+public_email_status, public_emails = get('/user/public_emails')
+public_email_verified = isinstance(public_emails, list) and any(item.get('email', '').casefold() == args.email.casefold() and item.get('verified') is True for item in public_emails)
 repo_status, repo = get('/repos/hospital-appointment-team/hospital-appointment-system')
 permissions = repo.get('permissions', {}) if isinstance(repo, dict) else {}
 report = {
@@ -50,6 +52,8 @@ report = {
     'matches_expected_username': isinstance(login, str) and login.casefold() == args.expected_user.casefold(),
     'email_api_status': email_status,
     'supplied_email_verified_on_account': email_verified,
+    'public_email_api_status': public_email_status,
+    'supplied_public_email_verified': public_email_verified,
     'supplied_email_owner_attested': args.email_attested,
     'repository_api_status': repo_status,
     'repository_push_permission': permissions.get('push'),
@@ -57,4 +61,4 @@ report = {
     'repository_admin_permission': permissions.get('admin'),
 }
 print(json.dumps(report, indent=2))
-sys.exit(0 if report['matches_expected_username'] and (email_verified or args.email_attested) and permissions.get('push') is True else 1)
+sys.exit(0 if report['matches_expected_username'] and (email_verified or public_email_verified or args.email_attested) and permissions.get('push') is True else 1)
