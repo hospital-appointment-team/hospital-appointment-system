@@ -11,6 +11,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 from urllib import request, parse, error
@@ -57,6 +58,9 @@ class HospitalHTTP(unittest.TestCase):
         if not PHP or not re.fullmatch(r'[a-zA-Z0-9_]+_test', DATABASE):
             raise unittest.SkipTest('PHP on PATH and an isolated TEST_DB_DATABASE ending in _test are required')
         cls.env = os.environ.copy()
+        cls.auth_storage = tempfile.TemporaryDirectory(prefix='hospital-http-auth-')
+        cls.addClassCleanup(cls.auth_storage.cleanup)
+        cls.env['AUTH_THROTTLE_DIR'] = cls.auth_storage.name
         cls.run = secrets.token_hex(8)
         cls.env.update(DB_DATABASE=DATABASE, HTTP_TEST_RUN=cls.run, APP_ENV='local', SESSION_SECURE='false', BOOKING_POLICY_CONFIRMED='false')
         cls.hidden = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
