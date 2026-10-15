@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Hospital\Controllers;
-use Hospital\Core\{Auth, Controller, HttpException, Request, Validation};
+use Hospital\Core\{Auth, Controller, HttpException, Passwords, Request, Validation};
 use Hospital\Models\{Database, Doctor, Model, User};
 use Hospital\Services\PhotoUpload;
 
@@ -51,7 +51,7 @@ final class DoctorAdminController extends Controller
                         if (!$lockedDoctor) throw new HttpException(404, 'Doctor not found.');
                         $oldPhoto = $lockedDoctor['photo_path'];
                         $user = User::find((int) $doctor['user_id']);
-                        Model::query('UPDATE users SET name=?,email=?,password_hash=? WHERE id=?', [$data['name'],$data['email'],$password !== '' ? password_hash($password, PASSWORD_DEFAULT) : $user['password_hash'],$doctor['user_id']]);
+                        Model::query('UPDATE users SET name=?,email=?,password_hash=? WHERE id=?', [$data['name'],$data['email'],$password !== '' ? Passwords::hash($password) : $user['password_hash'],$doctor['user_id']]);
                         Model::query('UPDATE doctors SET specialization_id=?,bio=?,consultation_fee=?,photo_path=?,available_days=? WHERE id=?', [$data['specialization_id'],$data['bio'],$data['consultation_fee'],$newPhoto ?? $oldPhoto,$data['available_days'],$doctor['id']]);
                     } else {
                         $userId = User::create($data + ['password' => $password], 'doctor');

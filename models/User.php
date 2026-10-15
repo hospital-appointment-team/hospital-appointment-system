@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Hospital\Models;
+use Hospital\Core\Passwords;
 
 final class User extends Model
 {
@@ -17,7 +18,7 @@ final class User extends Model
     public static function create(array $data, string $role = 'patient'): int
     {
         self::query('INSERT INTO users (name,email,password_hash,role,dob,blood_group,phone,is_active) VALUES (?,?,?,?,?,?,?,1)', [
-            $data['name'], $data['email'], password_hash($data['password'], PASSWORD_DEFAULT), $role,
+            $data['name'], $data['email'], Passwords::hash($data['password']), $role,
             $data['dob'] ?? null, $data['blood_group'] ?? null, $data['phone'] ?? null,
         ]);
         return (int) Database::connection()->lastInsertId();

@@ -40,6 +40,7 @@ $hash = password_hash('correct-password', PASSWORD_DEFAULT);
 $check(password_verify('correct-password', $hash) && !password_verify('wrong-password', $hash), 'Password hashing and verification');
 require __DIR__ . '/view-rendering.php';
 (require __DIR__ . '/login-throttle.php')($check);
+require __DIR__ . '/password-policy.php';
 session_destroy();
 
 
