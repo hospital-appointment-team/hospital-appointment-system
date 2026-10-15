@@ -66,3 +66,11 @@ button[aria-pressed=true] { background: #075450; color: #fff; }
 .appointment-group { margin: 2rem 0; }
 summary { cursor: pointer; font-weight: 650; }
 details form { min-width: 220px; padding: .75rem 0; }
+.weekly-scroll { overflow-x: auto; }
+.weekly-grid { display: grid; grid-template-columns: repeat(5,minmax(150px,1fr)); min-width: 800px; background: white; border: 1px solid #cfdee5; border-radius: .5rem; }
+.week-heading { padding: .8rem; background: #eaf2f5; font-weight: 700; }
+.week-cell { border-top: 1px solid #d9e3e8; border-right: 1px solid #d9e3e8; padding: .6rem; min-height: 100px; }
+.week-appointment { border-radius: .4rem; padding: .5rem; margin-top: .4rem; overflow-wrap: anywhere; }
+.week-appointment .badge { padding: .1rem .25rem; }
+dd { margin: 0 0 1rem; font-weight: 650; }
+@media (max-width: 760px) { .hero,.split { grid-template-columns: 1fr; } .container { margin-top: 1.5rem; } nav { gap: .7rem; } .header { align-items: flex-start; } }

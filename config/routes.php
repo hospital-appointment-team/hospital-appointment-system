@@ -31,5 +31,7 @@ return [
     'GET /patient/appointments' => [Hospital\Controllers\BookingController::class, 'appointments'],
     'GET /patient/appointments/{id}/confirmation' => [Hospital\Controllers\BookingController::class, 'confirmation'],
     'POST /api/appointments/cancel' => [Hospital\Controllers\AppointmentController::class, 'cancel'],
-    'GET /doctor/dashboard' => [Hospital\Controllers\HomeController::class, 'doctor'],
+    'PUT /api/appointments/{id}' => [Hospital\Controllers\AppointmentController::class, 'update'],
+    'GET /doctor/dashboard' => [Hospital\Controllers\DashboardController::class, 'doctor'],
+    'GET /admin/appointments' => [Hospital\Controllers\DashboardController::class, 'admin'],
 ];

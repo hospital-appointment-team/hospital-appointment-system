@@ -9,7 +9,7 @@
 <?php if (!$currentUser): ?><a href="/login">Sign in</a><a href="/register">Create account</a>
 <?php elseif ($currentUser['role'] === 'patient'): ?><a href="/patient">Find a doctor</a><a href="/patient/appointments">My appointments</a><a href="/patient/profile">Profile</a>
 <?php elseif ($currentUser['role'] === 'doctor'): ?><a href="/doctor/dashboard">My schedule</a>
-<?php else: ?><a href="/admin">Overview</a><a href="/admin/users">Accounts</a><a href="/admin/specializations">Specializations</a><a href="/admin/doctors">Doctors</a><?php endif; ?>
+<?php else: ?><a href="/admin">Overview</a><a href="/admin/users">Accounts</a><a href="/admin/specializations">Specializations</a><a href="/admin/doctors">Doctors</a><a href="/admin/appointments">Appointments</a><?php endif; ?>
 <?php if ($currentUser): ?><form method="post" action="/logout" class="inline"><?php Form::csrf(); ?><button class="secondary">Sign out</button></form><?php endif; ?>
 </nav></header><main id="main" class="container">
 <?php if ($flash): ?><p class="notice" role="status"><?= $e($flash) ?></p><?php endif; ?>

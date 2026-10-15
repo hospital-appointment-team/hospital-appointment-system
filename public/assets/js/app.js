@@ -99,6 +99,20 @@
     });
     announce('Appointment status updated to ' + status + '.');
   };
+  document.querySelectorAll('[data-status]').forEach(button => button.addEventListener('click', async () => {
+    const row = button.closest('tr'); const buttons = row.querySelectorAll('[data-status]'); buttons.forEach(item => { item.disabled = true; });
+    try {
+      const data = await request('/api/appointments/' + Number(button.dataset.id), 'PUT', { status: button.dataset.status });
+      statusUpdate(Number(button.dataset.id), data.new_status);
+    } catch (error) { buttons.forEach(item => { item.disabled = false; }); announce(error.message, true); }
+  }));
+  document.querySelectorAll('.admin-cancel').forEach(form => form.addEventListener('submit', async event => {
+    event.preventDefault(); const button = form.querySelector('button'); button.disabled = true;
+    try {
+      const data = await request('/api/appointments/' + Number(form.dataset.id), 'PUT', { status: 'Cancelled', reason: form.elements.reason.value });
+      statusUpdate(Number(form.dataset.id), data.new_status); form.reset(); form.closest('details').open = false;
+    } catch (error) { announce(error.message, true); } finally { button.disabled = false; }
+  }));
   document.querySelectorAll('[data-cancel-appointment]').forEach(button => button.addEventListener('click', async () => {
     button.disabled = true;
     try {

@@ -75,6 +75,26 @@ test('failed activation preserves the displayed state and allows retry', async (
   await button.listeners.click();
   assert.equal(label.textContent, 'Active'); assert.equal(button.textContent, 'Deactivate'); assert.equal(button.disabled, false);
 });
+test('doctor action uses the shared PUT endpoint and updates its badge', async () => {
+  const button = fakeButton({ id: '20', status: 'Completed' });
+  const badge = { textContent: 'Confirmed', className: 'badge confirmed' };
+  const row = {
+    querySelectorAll(selector) { return selector === '[data-status-badge]' ? [badge] : selector === '[data-status]' ? [button] : []; },
+    matches() { return false; }, closest() { return null; },
+  };
+  button.closest = () => row;
+  setup(async (url, options) => {
+    assert.equal(url, '/api/appointments/20'); assert.equal(options.method, 'PUT');
+    assert.equal(JSON.parse(options.body).status, 'Completed');
+    return { ok: true, json: async () => ({ ok: true, new_status: 'Completed' }) };
+  }, { querySelectorAll(selector) {
+    if (selector === '[data-status]') return [button];
+    if (selector.startsWith('[data-appointment-id="20"]')) return [row];
+    return [];
+  } });
+  await button.listeners.click();
+  assert.equal(badge.textContent, 'Completed'); assert.equal(badge.className, 'badge completed'); assert.equal(button.disabled, true);
+});
 test('stale slot response cannot replace the latest selected day', async () => {
   const first = fakeButton({ date: '2026-10-19' }); const second = fakeButton({ date: '2026-10-20' });
   const form = { elements: { appointment_date: { value: '' }, appointment_time: { value: '09:00' } }, addEventListener() {} };
