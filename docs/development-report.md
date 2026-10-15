@@ -1,6 +1,8 @@
 # Local implementation report — 2026-10-16
 
-## Current Developer B checkpoint
+Historical implementation checkpoints follow. Their missing-runtime and unrun-test statements describe those earlier checkpoints. Current executed verification results and limitations are recorded in [testing.md](testing.md), including the bcrypt policy and test-runner remediations. Original commit authors and published history are preserved.
+
+## Initial Developer B checkpoint
 
 The current branch is feature/developer-b-appointments, based on A's unchanged 5cecfe5. GitHub APIs verified account sabekunnaher-17, repository push=true, and antorasabekunnaher@gmail.com listed with verified=true at /user/public_emails. The private email endpoint returned 404; no extra scopes were requested. Local author is Sabekunnaher Antora <antorasabekunnaher@gmail.com>. Global author settings were compared before/after and remain unchanged. No A credential was used for B's API or push operations.
 
