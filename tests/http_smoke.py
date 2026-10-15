@@ -95,6 +95,21 @@ class HospitalHTTP(unittest.TestCase):
             time.sleep(0.1)
         raise RuntimeError('Local test server did not become ready')
 
+    def test_authentication_failure_equivalence(self):
+        bodies = []
+        for label in ['journey', 'unknown-login']:
+            client = Client(self.base)
+            token = client.token()
+            email = f'{label}-{self.run_id}@example.test'
+            result = client.call('/login', {'_csrf': token, 'email': email, 'password': 'Incorrect-http-password'})
+            self.assertEqual(result[0], 422)
+            self.assertIn('text/html', result[2]['Content-Type'])
+            self.assertTrue(result[3].endswith('/login'))
+            self.assertIn('Email or password is incorrect.', result[1])
+            self.assertNotIn('deactivated', result[1])
+            bodies.append(result[1].replace(email, '[submitted-email]').replace(token, '[csrf-token]'))
+        self.assertEqual(bodies[0], bodies[1], 'Failure bodies differ only in submitted email and CSRF token')
+
     def test_registration_validation_duplicate_and_profile(self):
         client = Client(self.base)
         data = {'_csrf': client.token('/register'), 'name': 'New patient', 'email': f'new-{self.run_id}@example.test', 'password': 'Http-test-only-839!', 'dob': '1990-01-01', 'blood_group': 'O+', 'phone': '01234567890', 'role': 'admin'}

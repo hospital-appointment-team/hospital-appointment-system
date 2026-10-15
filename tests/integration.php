@@ -39,6 +39,7 @@ try {
     }
     $patient = User::find($users[0]);
     $check(password_verify('Test-only-password-492', $patient['password_hash']), 'Stored password hash verifies');
+    $check(!password_needs_rehash($patient['password_hash'], \Hospital\Core\Passwords::ALGORITHM, \Hospital\Core\Passwords::OPTIONS), 'Persisted account hash matches the configured password policy');
     $check($patient['role'] === 'patient', 'Patient role persisted');
     Model::query('UPDATE users SET name=?,phone=?,dob=? WHERE id=?', ['Updated patient','01234567890','1991-02-03',$users[0]]);
     $check(User::find($users[0])['name'] === 'Updated patient', 'Profile fields persist');
