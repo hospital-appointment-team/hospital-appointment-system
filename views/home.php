@@ -1,1 +1,1 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hospital portal</title><link rel="stylesheet" href="/assets/css/app.css"><main class="container"><section class="card"><h1>Hospital appointment portal</h1><p>Application foundation ready for development.</p></section></main></html>
+<section class="card"><p class="eyebrow">CareConnect</p><h1>Your hospital portal</h1><p>Manage your account and clinical services securely.</p></section>

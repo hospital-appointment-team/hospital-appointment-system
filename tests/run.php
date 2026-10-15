@@ -29,6 +29,15 @@ $cookie = session_get_cookie_params();
 $check($cookie['httponly'] && $cookie['samesite'] === 'Lax', 'Session cookie protections are configured');
 $check(ini_get('session.use_strict_mode') === '1', 'Strict session IDs are enabled');
 $check(Security::escape('<script>"&') === '&lt;script&gt;&quot;&amp;', 'HTML special characters are escaped');
+$check(\Hospital\Core\Validation::date('2024-02-29'), 'Leap day accepted');
+$check(!\Hospital\Core\Validation::date('2025-02-29'), 'Invalid leap day rejected');
+$check(!\Hospital\Core\Validation::date('2026-2-01'), 'Noncanonical dates rejected');
+$check(!\Hospital\Core\Validation::password(str_repeat('a', 73)), 'Bcrypt truncation prevented');
+$check(!\Hospital\Core\Validation::password("password\0"), 'Null-byte password rejected');
+$invalid = \Hospital\Core\Validation::patient(['name' => 'A', 'phone' => 'bad', 'dob' => '3000-01-01'], true);
+$check(count($invalid) === 6, 'All registration fields are validated');
+$hash = password_hash('correct-password', PASSWORD_DEFAULT);
+$check(password_verify('correct-password', $hash) && !password_verify('wrong-password', $hash), 'Password hashing and verification');
 session_destroy();
 
 
