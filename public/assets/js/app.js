@@ -18,4 +18,13 @@
     return data;
   };
   window.Hospital = { request, announce };
+  document.querySelectorAll('[data-toggle-user]').forEach(button => button.addEventListener('click', async () => {
+    button.disabled = true;
+    try {
+      const data = await request('/api/users/toggle-active', 'POST', { user_id: Number(button.dataset.toggleUser) });
+      button.textContent = data.is_active ? 'Deactivate' : 'Activate';
+      button.closest('tr').querySelector('[data-active-label]').textContent = data.is_active ? 'Active' : 'Inactive';
+      announce('Account access updated.');
+    } catch (error) { announce(error.message, true); } finally { button.disabled = false; }
+  }));
 })();

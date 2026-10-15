@@ -49,3 +49,29 @@ test('feedback uses text rather than HTML', () => {
   assert.equal(app.feedback.textContent, '<script>alert(1)</script>');
   assert.equal(app.feedback.className, 'notice error');
 });
+
+function fakeButton(dataset = {}) {
+  return { dataset, disabled: false, textContent: '', listeners: {},
+    addEventListener(type, callback) { this.listeners[type] = callback; },
+    setAttribute() {},
+  };
+}
+test('activation updates the label only after server success', async () => {
+  const button = fakeButton({ toggleUser: '12' }); button.textContent = 'Deactivate';
+  const label = { textContent: 'Active' };
+  button.closest = () => ({ querySelector: () => label });
+  setup(async () => ({ ok: true, json: async () => ({ ok: true, is_active: false }) }), {
+    querySelectorAll(selector) { return selector === '[data-toggle-user]' ? [button] : []; },
+  });
+  await button.listeners.click();
+  assert.equal(label.textContent, 'Inactive'); assert.equal(button.textContent, 'Activate'); assert.equal(button.disabled, false);
+});
+test('failed activation preserves the displayed state and allows retry', async () => {
+  const button = fakeButton({ toggleUser: '12' }); button.textContent = 'Deactivate';
+  const label = { textContent: 'Active' }; button.closest = () => ({ querySelector: () => label });
+  setup(async () => ({ ok: false, json: async () => ({ ok: false, message: 'Forbidden' }) }), {
+    querySelectorAll(selector) { return selector === '[data-toggle-user]' ? [button] : []; },
+  });
+  await button.listeners.click();
+  assert.equal(label.textContent, 'Active'); assert.equal(button.textContent, 'Deactivate'); assert.equal(button.disabled, false);
+});
