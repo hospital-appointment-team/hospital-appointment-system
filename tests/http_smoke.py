@@ -10,6 +10,7 @@ import secrets
 import shutil
 import socket
 import subprocess
+import tempfile
 import sys
 import time
 import unittest
@@ -54,11 +55,13 @@ class Client:
 class HospitalHTTP(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if not PHP or not re.fullmatch(r'[a-zA-Z0-9_]+_test', DATABASE):
-            raise unittest.SkipTest('PHP on PATH and an isolated TEST_DB_DATABASE ending in _test are required')
+        if not PHP or not re.fullmatch(r'[a-zA-Z0-9_]+_test', DATABASE) or os.environ.get('TEST_DB_FRESH_CONFIRM') != 'true':
+            raise unittest.SkipTest('PHP and a NEW empty _test database with TEST_DB_FRESH_CONFIRM=true are required')
+        cls.private_state = tempfile.TemporaryDirectory(prefix='hospital-http-state-')
+        cls.addClassCleanup(cls.private_state.cleanup)
         cls.env = os.environ.copy()
         cls.run = secrets.token_hex(8)
-        cls.env.update(DB_DATABASE=DATABASE, HTTP_TEST_RUN=cls.run, APP_ENV='local', SESSION_SECURE='false', BOOKING_POLICY_CONFIRMED='false')
+        cls.env.update(DB_DATABASE=DATABASE, HTTP_TEST_RUN=cls.run, APP_ENV='local', SESSION_SECURE='false', BOOKING_POLICY_CONFIRMED='false', STATE_STORAGE_DIR=cls.private_state.name, SLOT_MINUTES='30', CLINIC_OPEN='09:00', CLINIC_CLOSE='12:00')
         cls.hidden = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
         fixture = subprocess.run([PHP, 'tests/http-fixtures.php', 'setup'], cwd=ROOT, env=cls.env, capture_output=True, text=True, **cls.hidden)
         if fixture.returncode:

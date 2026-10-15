@@ -10,6 +10,11 @@ use Hospital\Services\PhotoUpload;
 $email = static fn (string $role): string => "$role-$run@example.test";
 $action = $argv[1] ?? '';
 if ($action === 'setup') {
+    if (getenv('TEST_DB_FRESH_CONFIRM') !== 'true') exit(2);
+    foreach (['users','specializations','doctors','appointments'] as $table) {
+        if ((int) Model::query('SELECT COUNT(*) FROM ' . $table)->fetchColumn() !== 0) exit(2);
+    }
+    \Hospital\Services\DurationPolicy::synchronized(static fn () => \Hospital\Services\DurationPolicy::verify(30, true));
     $ids = [];
     foreach (['admin','doctor','patient'] as $role) $ids[$role] = User::create(['name'=>"HTTP $role",'email'=>$email($role),'password'=>'Http-test-only-839!','dob'=>'1990-01-01','phone'=>'01234567890','blood_group'=>'O+'],$role);
     Model::query('INSERT INTO specializations (name) VALUES (?)',["HTTP $run"]);

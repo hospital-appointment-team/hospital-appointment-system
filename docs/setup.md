@@ -47,6 +47,8 @@ Availability edits affect future booking options; they preserve existing appoint
 
 Any Cancelled-to-reserving transition requires valid configured duration and a conflict check; no duration is guessed. Existing reservations may be confirmed, completed, or marked No-Show while new booking is disabled. Status mutations recheck the caller's active role under a database lock.
 
+Duration is now frozen by a protected, durable per-database baseline before the first insert. Changed/missing legacy/corrupt baselines fail closed. Configure shared STATE_STORAGE_DIR for multiple hosts and back it up with the database. See [duration-policy.md](duration-policy.md) for locking, recovery, and deliberately conservative failure semantics.
+
 ## Cancellation audit
 
 Admin cancellations require a reason. The approved file approach saves it under `storage/audit/cancellations.jsonl`, outside `public/` and excluded from Git. The patient visit reason is preserved. Give only the application service account and authorized administrators access (use NTFS ACLs on Windows). Back up and retain the file according to the hospital's approved policy.
@@ -80,12 +82,15 @@ Manual smoke checks: `/` returns the portal; an unknown URL returns 404; `/.env`
 For database tests, create an isolated database whose name ends in `_test`, import the schema, and set `TEST_DB_DATABASE` in the process environment. The normal `.env` connection credentials must have access to that database. Never point tests at shared data.
 
 ```powershell
-$env:TEST_DB_DATABASE = 'hospital_appointments_test'
+$env:TEST_DB_DATABASE = 'hospital_integration_unique_run_test'
+$env:TEST_DB_FRESH_CONFIRM = 'true'
 php tests/integration.php
+# Provision ANOTHER new empty database and import schema.sql before the HTTP suite.
+$env:TEST_DB_DATABASE = 'hospital_http_unique_run_test'
 python tests/http_smoke.py
 ```
 
-The suites create randomly tagged fixtures and clean those records afterwards; they never drop or alter tables. A hard crash can leave tagged test records. The integration suite uses independent PHP processes to race two bookings. The HTTP suite launches and terminates a loopback-only PHP server, exercises registration/login/profile, role/CSRF/inactive checks, specialization protection, image uploads/deactivation, status endpoints, JSON contracts, and disabled booking policy. Its fixture photos are deleted during cleanup. The static checker is not a PHP syntax checker or proof of runtime correctness.
+Provision a separate newly created empty database and import the schema before EACH suite; use a unique _test name for each run. TEST_DB_FRESH_CONFIRM is your explicit confirmation of that setup. Both suites refuse nonempty tables; neither creates, drops, overwrites, or migrates databases. Private state is isolated in temporary test directories. They create tagged fixtures and clean only those records; a crash can leave fixtures, so provision another new test database rather than reusing it. The integration suite races independent PHP workers. The HTTP suite uses a loopback server. The static checker is not a PHP parser or runtime proof.
 
 ## Contributor workflow
 

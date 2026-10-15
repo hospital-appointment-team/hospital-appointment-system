@@ -3,9 +3,12 @@ declare(strict_types=1);
 // Explicitly provision an isolated database ending in _test and import schema.sql first.
 if (PHP_SAPI !== 'cli') exit(2);
 $testDatabase = getenv('TEST_DB_DATABASE');
-if (!is_string($testDatabase) || !preg_match('/^[a-zA-Z0-9_]+_test$/D', $testDatabase)) {
-    fwrite(STDERR, "Set TEST_DB_DATABASE to a dedicated database ending in _test. No tests ran.\n"); exit(2);
+if (!is_string($testDatabase) || !preg_match('/^[a-zA-Z0-9_]+_test$/D', $testDatabase) || getenv('TEST_DB_FRESH_CONFIRM') !== 'true') {
+    fwrite(STDERR, "Provision a NEW empty _test database and set TEST_DB_DATABASE and TEST_DB_FRESH_CONFIRM=true. No tests ran.\n"); exit(2);
 }
+$stateDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'hospital-integration-' . bin2hex(random_bytes(12));
+if (!mkdir($stateDirectory, 0700)) exit(2);
+putenv('STATE_STORAGE_DIR=' . $stateDirectory);
 putenv('DB_DATABASE=' . $testDatabase);
 putenv('BOOKING_POLICY_CONFIRMED=true'); putenv('CLINIC_OPEN=09:00'); putenv('CLINIC_CLOSE=12:00'); putenv('SLOT_MINUTES=30'); putenv('BOOKING_INCLUDE_TODAY=true');
 require dirname(__DIR__) . '/config/bootstrap.php';
@@ -25,6 +28,10 @@ $expect = static function (callable $action, int $status) use ($check): void {
 };
 $suffix = bin2hex(random_bytes(8)); $exit = 0;
 try {
+    foreach (['users','specializations','doctors','appointments'] as $table) {
+        // Table names are fixed literals, never request input.
+        if ((int) Model::query('SELECT COUNT(*) FROM ' . $table)->fetchColumn() !== 0) throw new RuntimeException('Test database must be newly provisioned and empty.');
+    }
     Model::query('INSERT INTO specializations (name) VALUES (?)', ['Test ' . $suffix]);
     $specializationId = (int) Database::connection()->lastInsertId();
     foreach (['patient','patient','doctor','admin'] as $index => $role) {
@@ -43,6 +50,11 @@ try {
     foreach (AvailabilityService::dates($doctor) as $candidate => $eligible) if ($eligible && new DateTimeImmutable($candidate . ' 09:00') > new DateTimeImmutable()) { $date = $candidate; break; }
     $check($date !== null, 'Future eligible test date exists');
     $id = BookingService::book($users[0],$doctorId,$date,'09:00','Test visit');
+    putenv('SLOT_MINUTES=15');
+    $expect(fn () => AvailabilityService::slots($doctor,$date),503);
+    $expect(fn () => BookingService::book($users[1],$doctorId,$date,'09:15','Duration drift must fail'),503);
+    putenv('SLOT_MINUTES=30');
+    $check(in_array('09:30',AvailabilityService::slots($doctor,$date),true), 'Adjacent original-duration slot is available');
     $check(!in_array('09:00',AvailabilityService::slots($doctor,$date),true), 'Booked slot excluded');
     $expect(fn () => BookingService::book($users[1],$doctorId,$date,'09:00','Duplicate'),409);
     $expect(fn () => AppointmentStatusService::update(User::find($users[1]),$id,'Cancelled'),403);
@@ -92,5 +104,11 @@ try {
     if ($doctorId !== null) { Model::query('DELETE FROM appointments WHERE doctor_id=?',[$doctorId]); Model::query('DELETE FROM doctors WHERE id=?',[$doctorId]); }
     if ($specializationId !== null) Model::query('DELETE FROM specializations WHERE id=?',[$specializationId]);
     foreach ($users as $userId) Model::query('DELETE FROM users WHERE id=?',[$userId]);
+    $temporaryRoot = realpath(sys_get_temp_dir()) . DIRECTORY_SEPARATOR;
+    $resolvedState = realpath($stateDirectory);
+    if ($resolvedState !== false && str_starts_with($resolvedState, $temporaryRoot)) {
+        foreach (glob($resolvedState . DIRECTORY_SEPARATOR . '*.json') as $file) unlink($file);
+        rmdir($resolvedState);
+    }
 }
 exit($exit);

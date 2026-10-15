@@ -52,10 +52,16 @@ final class AvailabilityService
 
     public static function slots(array $doctor, string $date): array
     {
+        return DurationPolicy::synchronized(static fn (): array => self::slotsLocked($doctor, $date));
+    }
+
+    private static function slotsLocked(array $doctor, string $date): array
+    {
         if (!Validation::date($date)) throw new HttpException(422, 'Use a date in YYYY-MM-DD format.');
         if (!(self::dates($doctor)[$date] ?? false)) return [];
         $times = self::times();
         $minutes = (int) Environment::get('SLOT_MINUTES');
+        DurationPolicy::verify($minutes);
         $now = new \DateTimeImmutable();
         $booked = Model::query("SELECT appointment_time FROM appointments WHERE doctor_id=? AND appointment_date=? AND status<>'Cancelled'", [$doctor['id'], $date])->fetchAll(\PDO::FETCH_COLUMN);
         return array_values(array_filter($times, static function (string $time) use ($booked, $date, $minutes, $now): bool {

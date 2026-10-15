@@ -20,6 +20,11 @@ final class AppointmentStatusService
 
     public static function update(array $actor, int $id, string $status, string $reason = ''): void
     {
+        DurationPolicy::synchronized(static fn () => self::updateLocked($actor, $id, $status, $reason));
+    }
+
+    private static function updateLocked(array $actor, int $id, string $status, string $reason): void
+    {
         if (!in_array($status, Appointment::STATUSES, true)) throw new HttpException(422, 'Invalid appointment status.');
         $db = Database::connection(); $db->beginTransaction();
         try {
