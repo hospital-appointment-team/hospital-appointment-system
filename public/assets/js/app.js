@@ -27,4 +27,15 @@
       announce('Account access updated.');
     } catch (error) { announce(error.message, true); } finally { button.disabled = false; }
   }));
+  if (document.querySelector('[data-doctor-stats]')) {
+    request('/api/doctors/stats').then(data => {
+      data.doctors.forEach(doctor => {
+        const cell = document.querySelector(`[data-stat-id="${Number(doctor.id)}"]`);
+        if (cell) cell.textContent = String(doctor.appointment_count);
+      });
+    }).catch(error => {
+      document.querySelectorAll('[data-stat-id]').forEach(cell => { cell.textContent = 'Unavailable'; });
+      announce(error.message, true);
+    });
+  }
 })();

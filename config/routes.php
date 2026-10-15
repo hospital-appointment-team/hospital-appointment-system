@@ -15,6 +15,13 @@ return [
     'POST /api/users/toggle-active' => [Hospital\Controllers\UserController::class, 'toggle'],
     'GET /admin/specializations' => [Hospital\Controllers\SpecializationController::class, 'index'],
     'POST /admin/specializations' => [Hospital\Controllers\SpecializationController::class, 'index'],
+    'GET /admin/doctors' => [Hospital\Controllers\DoctorAdminController::class, 'index'],
+    'GET /admin/doctors/create' => [Hospital\Controllers\DoctorAdminController::class, 'edit'],
+    'POST /admin/doctors/create' => [Hospital\Controllers\DoctorAdminController::class, 'edit'],
+    'GET /admin/doctors/{id}/edit' => [Hospital\Controllers\DoctorAdminController::class, 'edit'],
+    'POST /admin/doctors/{id}/edit' => [Hospital\Controllers\DoctorAdminController::class, 'edit'],
+    'POST /admin/doctors/{id}/deactivate' => [Hospital\Controllers\DoctorAdminController::class, 'deactivate'],
+    'GET /api/doctors/stats' => [Hospital\Controllers\DoctorAdminController::class, 'stats'],
     'GET /patient' => [Hospital\Controllers\HomeController::class, 'patient'],
     'GET /doctor/dashboard' => [Hospital\Controllers\HomeController::class, 'doctor'],
 ];
