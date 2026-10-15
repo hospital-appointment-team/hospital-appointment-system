@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+/vendor/
+/node_modules/
+/storage/
+/public/uploads/doctors/*
+!/public/uploads/doctors/.gitkeep
+!/public/uploads/doctors/.htaccess
+__pycache__/
+*.log
+.phpunit.cache/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,2 @@
+<p class="eyebrow">Administration</p><h1>Hospital overview</h1><p>Manage the people and schedules behind every appointment.</p>
+<div class="cards"><a class="card" href="/admin/users"><h2>Accounts</h2><p>Review patient and staff access.</p></a><a class="card" href="/admin/specializations"><h2>Specializations</h2><p>Organize clinical services.</p></a><a class="card" href="/admin/doctors"><h2>Doctors</h2><p>Manage profiles and weekly availability.</p></a></div>
