@@ -28,6 +28,23 @@ php scripts/create-admin.php "Real Admin Name" "admin@example.invalid" < protect
 
 The redirection example uses shell stdin redirection (for example, cmd.exe). PowerShell does not support `<` in the same way. Use a local protected file or your approved secret manager to supply stdin without putting the password in arguments, chat, or shell history. Delete any temporary password file afterwards. No default admin password is shipped. Doctor accounts are created through the admin panel; patients register themselves.
 
+## Booking configuration
+
+Booking is intentionally unavailable until all of these values are configured in `.env` or the service environment:
+
+- `CLINIC_OPEN`: `HH:MM`, 24-hour format.
+- `CLINIC_CLOSE`: `HH:MM`, later than opening on the same day.
+- `SLOT_MINUTES`: positive integer minutes, with at least one full slot fitting within the same-day clinic hours.
+- `BOOKING_POLICY_CONFIRMED=true` once the hospital approves its policy.
+
+No actual clinic hours or duration are assumed. Only full slots that fit before closing are generated. The next seven calendar dates include today by default; `BOOKING_INCLUDE_TODAY=false` starts tomorrow. Only dates matching the doctor's comma-separated Monday–Friday availability are enabled. Elapsed times are excluded.
+
+All statuses except `Cancelled` reserve their appointment interval. Cancelled slots may be rebooked. Booking and status changes lock the doctor row, then revalidate conflicts with locking reads inside an InnoDB transaction. This protects requests using this application; direct database writers must follow the same protocol.
+
+The required schema has no per-appointment duration. Overlap checks use the current configured duration for existing appointments too. Do not change duration while existing bookings need a different duration; agree a migration strategy first. Overnight hours, per-doctor durations, and schedule exceptions are not specified and are not assumed.
+
+Availability edits affect future booking options; they preserve existing appointments. Admin reactivation of a cancelled Pending/Confirmed reservation must fit current availability and must not conflict.
+
 ## Run and verify
 
 Serve only public/: php -S 127.0.0.1:8000 -t public public/router.php

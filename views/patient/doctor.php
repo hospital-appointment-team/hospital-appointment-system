@@ -1,0 +1,3 @@
+<?php use Hospital\Core\Form; ?>
+<a href="/patient">← All doctors</a><div class="split profile-grid"><section class="card"><?php if ($doctor['photo_path']): ?><img class="avatar" src="<?= $e($doctor['photo_path']) ?>" alt="<?= $e($doctor['name']) ?>"><?php endif; ?><p class="eyebrow"><?= $e($doctor['specialization']) ?></p><h1><?= $e($doctor['name']) ?></h1><p class="prewrap"><?= $e($doctor['bio']) ?></p><p>Consultation fee: <strong><?= $e($doctor['consultation_fee']) ?></strong></p><p>Available: <?= $e($doctor['available_days'] ?: 'No weekdays set') ?></p></section>
+<section class="card"><h2>Available dates</h2><ul><?php foreach ($dates as $date => $eligible): if ($eligible): ?><li><?= $e($date) ?></li><?php endif; endforeach; ?></ul></section></div>

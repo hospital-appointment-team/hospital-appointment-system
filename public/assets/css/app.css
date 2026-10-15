@@ -49,3 +49,11 @@ fieldset { border: 1px solid #c1d1d8; margin: 1rem 0; border-radius: .5rem; }
 .avatar { width: 120px; height: 120px; object-fit: cover; border-radius: .6rem; }
 .skip-link { position: absolute; left: -10000px; }
 .skip-link:focus { left: 1rem; top: 1rem; background: white; padding: .5rem; z-index: 10; }
+.filters { display: flex; gap: 1rem; align-items: end; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1.2rem; }
+.filters .field { flex: 1; min-width: 160px; margin: 0; }
+.doctor-card h2 { margin-bottom: .25rem; }
+.doctor-card .button { margin-top: .5rem; }
+.profile-grid { margin-top: 1.5rem; }
+.prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.date-options,.slot-options { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+button[aria-pressed=true] { background: #075450; color: #fff; }

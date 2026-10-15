@@ -18,6 +18,41 @@
     return data;
   };
   window.Hospital = { request, announce };
+  const element = (tag, text, className) => {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+  const filter = document.querySelector('#doctor-filter');
+  if (filter) {
+    let revision = 0;
+    const refresh = async event => {
+      event?.preventDefault();
+      const current = ++revision;
+      const cards = document.querySelector('#doctor-cards');
+      cards.setAttribute('aria-busy', 'true');
+      announce('Loading doctors…');
+      try {
+        const data = await request('/api/doctors?specialization_id=' + encodeURIComponent(filter.elements.specialization_id.value));
+        if (current !== revision) return;
+        const nodes = data.doctors.map(doctor => {
+          const card = element('article', undefined, 'card doctor-card');
+          if (/^\/uploads\/doctors\/[a-f0-9]{40}\.(jpg|png)$/.test(doctor.photo_path || '')) {
+            const image = element('img', undefined, 'avatar'); image.src = doctor.photo_path; image.alt = doctor.name; card.append(image);
+          }
+          card.append(element('h2', doctor.name), element('p', doctor.specialization), element('p', 'Consultation fee: ' + doctor.consultation_fee));
+          const link = element('a', 'View availability', 'button'); link.href = '/doctors/' + Number(doctor.id); card.append(link);
+          return card;
+        });
+        cards.replaceChildren(...(nodes.length ? nodes : [element('p', 'No active doctors match this selection.', 'card')]));
+        announce(nodes.length + ' doctors found.');
+      } catch (error) { if (current === revision) announce(error.message, true); }
+      finally { if (current === revision) cards.setAttribute('aria-busy', 'false'); }
+    };
+    filter.addEventListener('submit', refresh);
+    filter.elements.specialization_id.addEventListener('change', refresh);
+  }
   document.querySelectorAll('[data-toggle-user]').forEach(button => button.addEventListener('click', async () => {
     button.disabled = true;
     try {

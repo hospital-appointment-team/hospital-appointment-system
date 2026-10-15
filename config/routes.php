@@ -22,6 +22,10 @@ return [
     'POST /admin/doctors/{id}/edit' => [Hospital\Controllers\DoctorAdminController::class, 'edit'],
     'POST /admin/doctors/{id}/deactivate' => [Hospital\Controllers\DoctorAdminController::class, 'deactivate'],
     'GET /api/doctors/stats' => [Hospital\Controllers\DoctorAdminController::class, 'stats'],
-    'GET /patient' => [Hospital\Controllers\HomeController::class, 'patient'],
+    'GET /patient' => [Hospital\Controllers\BookingController::class, 'browse'],
+    'GET /doctors' => [Hospital\Controllers\BookingController::class, 'browse'],
+    'GET /api/doctors' => [Hospital\Controllers\BookingController::class, 'list'],
+    'GET /doctors/{id}' => [Hospital\Controllers\BookingController::class, 'profile'],
+    'GET /api/doctors/{id}/slots' => [Hospital\Controllers\BookingController::class, 'slots'],
     'GET /doctor/dashboard' => [Hospital\Controllers\HomeController::class, 'doctor'],
 ];
