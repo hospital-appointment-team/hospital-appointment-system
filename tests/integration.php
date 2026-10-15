@@ -103,7 +103,7 @@ try {
         if (is_file($gate)) unlink($gate);
     }
     // A cancelled interval is contested by reactivation and a new booking.
-    $raceId = BookingService::book($users[0],$doctorId,$date,'10:00','Reactivation race');
+    $raceId = BookingService::book($users[0],$doctorId,$date,'11:30','Reactivation race');
     AppointmentStatusService::update(User::find($users[0]),$raceId,'Cancelled');
     $race = static function (array $commands) use ($check): array {
         $gate = tempnam(sys_get_temp_dir(),'hospital-status-gate-'); unlink($gate); $jobs = [];
@@ -127,11 +127,11 @@ try {
         }
     };
     $results = $race([
-        [(string)$users[3],(string)$doctorId,$date,'10:00','', 'restore',(string)$raceId],
-        [(string)$users[1],(string)$doctorId,$date,'10:00','', 'book','0'],
+        [(string)$users[3],(string)$doctorId,$date,'11:30','', 'restore',(string)$raceId],
+        [(string)$users[1],(string)$doctorId,$date,'11:30','', 'book','0'],
     ]);
     $check($results === ['booked','conflict'] || $results === ['conflict','restored'], 'Exactly one new booking or reactivation succeeds');
-    $check((int) Model::query("SELECT COUNT(*) FROM appointments WHERE doctor_id=? AND appointment_date=? AND appointment_time='10:00' AND status<>'Cancelled'",[$doctorId,$date])->fetchColumn() === 1, 'Reactivation race preserves one reservation');
+    $check((int) Model::query("SELECT COUNT(*) FROM appointments WHERE doctor_id=? AND appointment_date=? AND appointment_time='11:30' AND status<>'Cancelled'",[$doctorId,$date])->fetchColumn() === 1, 'Reactivation race preserves one reservation');
     $cancelRaceId = BookingService::book($users[0],$doctorId,$date,'10:30','Cancellation/reactivation race');
     $results = $race([
         [(string)$users[3],(string)$doctorId,$date,'10:30','', 'cancel',(string)$cancelRaceId],
