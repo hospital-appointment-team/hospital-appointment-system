@@ -53,6 +53,65 @@
     filter.addEventListener('submit', refresh);
     filter.elements.specialization_id.addEventListener('change', refresh);
   }
+  const booking = document.querySelector('[data-booking-doctor]');
+  if (booking) {
+    let revision = 0;
+    const form = document.querySelector('#booking-form');
+    const submit = document.querySelector('#book-submit');
+    const slots = document.querySelector('#slot-options');
+    const message = document.querySelector('#slot-message');
+    booking.querySelectorAll('[data-date]').forEach(button => button.addEventListener('click', async () => {
+      const current = ++revision;
+      form.elements.appointment_date.value = button.dataset.date;
+      form.elements.appointment_time.value = '';
+      submit.disabled = true;
+      slots.replaceChildren(); message.textContent = 'Loading available times…';
+      booking.querySelectorAll('[data-date]').forEach(choice => choice.setAttribute('aria-pressed', String(choice === button)));
+      try {
+        const times = await request(`/api/doctors/${Number(booking.dataset.bookingDoctor)}/slots?date=${encodeURIComponent(button.dataset.date)}`);
+        if (current !== revision) return;
+        message.textContent = times.length ? 'Select a time.' : 'No available times for this date.';
+        times.forEach(time => {
+          const choice = element('button', time, 'secondary'); choice.type = 'button'; choice.setAttribute('aria-pressed', 'false');
+          choice.addEventListener('click', () => {
+            form.elements.appointment_time.value = time;
+            slots.querySelectorAll('button').forEach(other => other.setAttribute('aria-pressed', String(other === choice)));
+            submit.disabled = false;
+          }); slots.append(choice);
+        });
+      } catch (error) { if (current === revision) message.textContent = error.message; }
+    }));
+    form.addEventListener('submit', event => {
+      if (!form.elements.appointment_date.value || !form.elements.appointment_time.value) { event.preventDefault(); announce('Choose a date and time.', true); return; }
+      submit.disabled = true; submit.textContent = 'Submitting…';
+    });
+  }
+  const statusUpdate = (id, status) => {
+    document.querySelectorAll(`[data-appointment-id="${id}"], [data-week-appointment="${id}"]`).forEach(container => {
+      container.querySelectorAll('[data-status-badge]').forEach(badge => { badge.textContent = status; badge.className = 'badge ' + status.toLowerCase(); });
+      if (container.matches('[data-week-appointment]')) container.className = 'week-appointment ' + status.toLowerCase();
+      const activeFilter = document.querySelector('#status');
+      if (activeFilter?.value && activeFilter.value !== status && container.closest('.table-wrap') && document.querySelector('.admin-cancel')) container.hidden = true;
+      container.querySelectorAll('[data-status]').forEach(button => {
+        if (status === 'Confirmed' && button.dataset.status !== 'Confirmed') return;
+        button.disabled = true;
+      });
+    });
+    announce('Appointment status updated to ' + status + '.');
+  };
+  document.querySelectorAll('[data-cancel-appointment]').forEach(button => button.addEventListener('click', async () => {
+    button.disabled = true;
+    try {
+      const id = Number(button.dataset.cancelAppointment);
+      const data = await request('/api/appointments/cancel', 'POST', { appointment_id: id });
+      statusUpdate(id, data.new_status);
+      const row = button.closest('tr'); row.lastElementChild.textContent = '—';
+      document.querySelector('[data-status-group="Cancelled"] [data-group-body]').prepend(row);
+      document.querySelectorAll('[data-status-group]').forEach(group => {
+        group.querySelector('[data-empty-row]').hidden = Boolean(group.querySelector('[data-appointment-id]'));
+      });
+    } catch (error) { button.disabled = false; announce(error.message, true); }
+  }));
   document.querySelectorAll('[data-toggle-user]').forEach(button => button.addEventListener('click', async () => {
     button.disabled = true;
     try {

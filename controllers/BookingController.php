@@ -3,8 +3,8 @@ declare(strict_types=1);
 namespace Hospital\Controllers;
 
 use Hospital\Core\{Auth, Controller, HttpException, Request};
-use Hospital\Models\{Doctor, Model};
-use Hospital\Services\AvailabilityService;
+use Hospital\Models\{Appointment, Doctor, Model};
+use Hospital\Services\{AvailabilityService, BookingService};
 
 final class BookingController extends Controller
 {
@@ -53,4 +53,33 @@ final class BookingController extends Controller
         $this->json(AvailabilityService::slots($this->activeDoctor($id), Request::text($_GET, 'date')));
     }
 
+    public function book(): void
+    {
+        $user = Auth::requireRole('patient'); $body = Request::body();
+        $doctor = $this->activeDoctor((string) Request::id($body['doctor_id'] ?? null));
+        $data = []; foreach (['appointment_date','appointment_time','reason'] as $key) $data[$key] = Request::text($body, $key);
+        try {
+            $id = BookingService::book((int) $user['id'], (int) $doctor['id'], $data['appointment_date'], $data['appointment_time'], $data['reason']);
+            $this->redirect('/patient/appointments/' . $id . '/confirmation');
+        } catch (HttpException $exception) {
+            if (!in_array($exception->status, [409,422,503], true)) throw $exception;
+            $dates = AvailabilityService::dates($doctor); $errors = ['booking' => $exception->getMessage()];
+            $this->view('patient/doctor', compact('doctor','dates','data','errors') + ['title' => 'Choose an appointment'], $exception->status);
+        }
+    }
+
+    public function appointments(): void
+    {
+        $user = Auth::requireRole('patient');
+        $appointments = Appointment::query(Appointment::SELECT . ' WHERE a.patient_id=? ORDER BY a.appointment_date,a.appointment_time,a.id', [$user['id']])->fetchAll();
+        $this->view('patient/appointments', compact('appointments') + ['title' => 'My appointments']);
+    }
+
+    public function confirmation(string $id): void
+    {
+        $user = Auth::requireRole('patient');
+        $appointment = Appointment::query(Appointment::SELECT . ' WHERE a.id=? AND a.patient_id=?', [Request::id($id),$user['id']])->fetch();
+        if (!$appointment) throw new HttpException(404, 'Appointment not found.');
+        $this->view('patient/confirmation', compact('appointment') + ['title' => 'Appointment confirmation']);
+    }
 }

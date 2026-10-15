@@ -57,3 +57,12 @@ fieldset { border: 1px solid #c1d1d8; margin: 1rem 0; border-radius: .5rem; }
 .prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
 .date-options,.slot-options { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
 button[aria-pressed=true] { background: #075450; color: #fff; }
+.badge { display: inline-block; border-radius: 2rem; padding: .15rem .65rem; font-size: .85rem; font-weight: 700; white-space: nowrap; }
+.pending { background: #fff1cb; color: #6f4e00; }
+.confirmed { background: #e0edff; color: #1b4c87; }
+.completed { background: #d9f1e5; color: #155739; }
+.cancelled { background: #edf0f2; color: #44545d; }
+.no-show { background: #ffe0e3; color: #8e2334; }
+.appointment-group { margin: 2rem 0; }
+summary { cursor: pointer; font-weight: 650; }
+details form { min-width: 220px; padding: .75rem 0; }

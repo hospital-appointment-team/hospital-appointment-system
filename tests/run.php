@@ -38,7 +38,16 @@ $invalid = \Hospital\Core\Validation::patient(['name' => 'A', 'phone' => 'bad', 
 $check(count($invalid) === 6, 'All registration fields are validated');
 $hash = password_hash('correct-password', PASSWORD_DEFAULT);
 $check(password_verify('correct-password', $hash) && !password_verify('wrong-password', $hash), 'Password hashing and verification');
-use Hospital\Services\AvailabilityService;
+use Hospital\Services\{AppointmentStatusService, AvailabilityService};
+$check(AppointmentStatusService::permitted('patient', 'Pending', 'Cancelled', true), 'Patient can cancel own pending appointment');
+$check(!AppointmentStatusService::permitted('patient', 'Confirmed', 'Cancelled', true), 'Patient cannot cancel confirmed appointment');
+$check(!AppointmentStatusService::permitted('patient', 'Pending', 'Cancelled', false), 'Patient cannot cancel another patient appointment');
+$check(AppointmentStatusService::permitted('doctor', 'Confirmed', 'Completed', true), 'Doctor can complete own confirmed appointment');
+$check(!AppointmentStatusService::permitted('doctor', 'Confirmed', 'Completed', false), 'Doctor cannot change another doctor appointment');
+$check(!AppointmentStatusService::permitted('doctor', 'Completed', 'No-Show', true), 'Doctor terminal state cannot be overwritten');
+$check(!AppointmentStatusService::permitted('doctor', 'Pending', 'Confirmed', true), 'Doctor cannot confirm appointments');
+$check(AppointmentStatusService::permitted('admin', 'Completed', 'Cancelled', false), 'Admin may cancel any status');
+$check(!AppointmentStatusService::permitted('admin', 'Pending', 'unknown', true), 'Invalid status is rejected');
 $check(AvailabilityService::overlaps('09:00','09:15',30), 'Overlapping intervals detected');
 $check(!AvailabilityService::overlaps('09:00','09:30',30), 'Adjacent intervals do not overlap');
 $check(AvailabilityService::overlaps('09:15','09:00',30), 'Overlap detection is symmetric');

@@ -75,6 +75,29 @@ test('failed activation preserves the displayed state and allows retry', async (
   await button.listeners.click();
   assert.equal(label.textContent, 'Active'); assert.equal(button.textContent, 'Deactivate'); assert.equal(button.disabled, false);
 });
+test('stale slot response cannot replace the latest selected day', async () => {
+  const first = fakeButton({ date: '2026-10-19' }); const second = fakeButton({ date: '2026-10-20' });
+  const form = { elements: { appointment_date: { value: '' }, appointment_time: { value: '09:00' } }, addEventListener() {} };
+  const submit = { disabled: false }; const message = { textContent: '' };
+  const slots = { children: [], replaceChildren() { this.children = []; }, append(child) { this.children.push(child); } };
+  const booking = { dataset: { bookingDoctor: '5' }, querySelectorAll() { return [first, second]; } };
+  const pending = [];
+  setup(() => new Promise(resolve => pending.push(resolve)), {
+    querySelector(selector) {
+      return { '[data-booking-doctor]': booking, '#booking-form': form, '#book-submit': submit,
+        '#slot-options': slots, '#slot-message': message, 'meta[name="csrf-token"]': { content: 'token' } }[selector] || null;
+    },
+    createElement() { return fakeButton(); },
+  });
+  const oldRequest = first.listeners.click();
+  const newRequest = second.listeners.click();
+  assert.equal(form.elements.appointment_time.value, ''); assert.equal(submit.disabled, true);
+  pending[1]({ ok: true, json: async () => ['10:00'] }); await newRequest;
+  pending[0]({ ok: true, json: async () => ['09:00'] }); await oldRequest;
+  assert.equal(slots.children.length, 1); assert.equal(slots.children[0].textContent, '10:00');
+  assert.equal(form.elements.appointment_date.value, '2026-10-20');
+});
+
 function discoverySetup(fetch) {
   const select = fakeButton(); select.value = '1';
   const filter = { elements: { specialization_id: select }, listeners: {}, addEventListener(type, listener) { this.listeners[type] = listener; } };

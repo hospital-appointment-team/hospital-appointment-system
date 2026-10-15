@@ -7,7 +7,7 @@
 </head><body><a class="skip-link" href="#main">Skip to content</a>
 <header class="header"><a class="brand" href="/">✚ CareConnect</a><nav aria-label="Main navigation">
 <?php if (!$currentUser): ?><a href="/login">Sign in</a><a href="/register">Create account</a>
-<?php elseif ($currentUser['role'] === 'patient'): ?><a href="/patient">Find a doctor</a><a href="/patient/profile">Profile</a>
+<?php elseif ($currentUser['role'] === 'patient'): ?><a href="/patient">Find a doctor</a><a href="/patient/appointments">My appointments</a><a href="/patient/profile">Profile</a>
 <?php elseif ($currentUser['role'] === 'doctor'): ?><a href="/doctor/dashboard">My schedule</a>
 <?php else: ?><a href="/admin">Overview</a><a href="/admin/users">Accounts</a><a href="/admin/specializations">Specializations</a><a href="/admin/doctors">Doctors</a><?php endif; ?>
 <?php if ($currentUser): ?><form method="post" action="/logout" class="inline"><?php Form::csrf(); ?><button class="secondary">Sign out</button></form><?php endif; ?>
