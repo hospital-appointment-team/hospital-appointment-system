@@ -77,7 +77,7 @@ class HospitalHTTP(unittest.TestCase):
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
         cls.base = f'http://127.0.0.1:{port}'
-        cls.server = subprocess.Popen([PHP, '-S', f'127.0.0.1:{port}', '-t', 'public', 'public/router.php'], cwd=ROOT, env=cls.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **cls.hidden)
+        cls.server = subprocess.Popen([PHP, '-d', 'upload_max_filesize=3M', '-d', 'post_max_size=8M', '-S', f'127.0.0.1:{port}', '-t', 'public', 'public/router.php'], cwd=ROOT, env=cls.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **cls.hidden)
         def stop():
             cls.server.terminate()
             try:
@@ -113,6 +113,7 @@ class HospitalHTTP(unittest.TestCase):
         token = client.token('/patient/profile')
         result = client.call('/patient/profile', {'_csrf': token, 'name': 'Updated name', 'dob': '1990-01-01', 'phone': '01234567890', 'current_password': 'wrong', 'new_password': 'Changed-test-839!'})
         self.assertEqual(result[0], 422)
+        self.assertIn('value="Updated name"', result[1])
         result = client.call('/patient/profile', {'_csrf': token, 'name': 'Updated name', 'dob': '1990-01-01', 'phone': '01234567890', 'current_password': data['password'], 'new_password': 'Changed-test-839!'})
         self.assertEqual(result[0], 200)
         self.assertIn('Updated name', result[1])
@@ -176,6 +177,9 @@ class HospitalHTTP(unittest.TestCase):
         name = f'Unused {self.run}'
         self.assertEqual(admin.call('/admin/specializations', {'_csrf': token, 'action': 'create', 'name': name})[0], 200)
         self.assertEqual(admin.call('/admin/specializations', {'_csrf': token, 'action': 'create', 'name': name})[0], 422)
+        page = admin.call(f'/admin/specializations?edit={self.ids["specialization"]}')[1]
+        self.assertIn('name="action" value="edit"', page)
+        self.assertIn(f'name="id" value="{self.ids["specialization"]}"', page)
         def upload(photo):
             boundary = 'HospitalTestBoundary'
             fields = {'_csrf': token, 'name': 'HTTP Created doctor', 'email': f'created-{self.run}@example.test', 'password': 'Http-test-only-839!', 'specialization_id': str(self.ids['specialization']), 'bio': 'Test biography', 'consultation_fee': '400.00', 'available_days[]': 'Monday'}
@@ -187,13 +191,17 @@ class HospitalHTTP(unittest.TestCase):
             return admin.call('/admin/doctors/create', b''.join(chunks), method='POST', content_type=f'multipart/form-data; boundary={boundary}')
         self.assertEqual(upload(b'not an image')[0], 422)
         png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a8WQAAAAASUVORK5CYII=')
-        result = upload(png)
+        self.assertEqual(upload(png + b'0' * (2 * 1024 * 1024 + 1 - len(png)))[0], 422)
+        result = upload(png + b'0' * (2 * 1024 * 1024 - len(png)))
         self.assertEqual(result[0], 200)
         match = re.search(r'<tr><td>HTTP Created doctor</td>.*?/admin/doctors/(\d+)/edit', result[1], re.S)
         self.assertIsNotNone(match)
         doctor_id = match.group(1)
         page = admin.call(f'/admin/doctors/{doctor_id}/edit')
         self.assertIn('Test biography', page[1])
+        self.assertIn('value="HTTP Created doctor"', page[1])
+        self.assertIn(f'value="created-{self.run}@example.test"', page[1])
+        self.assertRegex(page[1], r'value="Monday"[^>]*checked')
         self.assertEqual(admin.call(f'/admin/doctors/{doctor_id}/deactivate', {'_csrf': token})[0], 200)
         patient = Client(self.base)
         patient.login('patient', self.run)
@@ -217,6 +225,74 @@ class HospitalHTTP(unittest.TestCase):
         result = admin.call(f'/api/appointments/{self.ids["appointment_0"]}', {'status': 'Cancelled', 'reason': 'HTTP integration cancellation fixture'}, method='PUT', csrf=token)
         self.assertEqual(result[0], 200)
         self.assertEqual(json.loads(result[1])['new_status'], 'Cancelled')
+
+    def test_enabled_booking_journey_and_two_doctor_ownership(self):
+        # A second server shares the fresh isolated database/state but enables explicit TEST hours.
+        with socket.socket() as sock:
+            sock.bind(('127.0.0.1', 0))
+            port = sock.getsockname()[1]
+        env = dict(self.env, BOOKING_POLICY_CONFIRMED='true')
+        server = subprocess.Popen([PHP, '-S', f'127.0.0.1:{port}', '-t', 'public', 'public/router.php'], cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **self.hidden)
+        def stop():
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server.kill()
+                server.wait()
+        self.addCleanup(stop)
+        base = f'http://127.0.0.1:{port}'
+        for _ in range(50):
+            try:
+                if Client(base).call('/')[0] == 200:
+                    break
+            except (OSError, error.URLError):
+                pass
+            time.sleep(0.1)
+        else:
+            self.fail('Enabled local server did not become ready')
+        patient = Client(base)
+        self.assertEqual(patient.login('journey', self.run)[0], 200)
+        date = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=6))).date() + datetime.timedelta(days=1)
+        while date.weekday() >= 5:
+            date += datetime.timedelta(days=1)
+        doctor_id = self.ids['doctor_profile']
+        page_path = f'/doctors/{doctor_id}'
+        self.assertEqual(patient.call(page_path)[0], 200)
+        result = patient.call(f'/api/doctors/{doctor_id}/slots?date={date}')
+        self.assertEqual(result[0], 200)
+        slots = json.loads(result[1])
+        self.assertIn('10:00', slots)
+        body = {'_csrf': patient.token(page_path), 'doctor_id': doctor_id, 'appointment_date': str(date), 'appointment_time': '10:00', 'reason': 'Enabled HTTP booking journey'}
+        result = patient.call('/appointments', body)
+        self.assertEqual(result[0], 200)
+        match = re.search(r'/patient/appointments/(\d+)/confirmation$', result[3])
+        self.assertIsNotNone(match)
+        appointment_id = int(match.group(1))
+        self.assertIn('Pending', result[1])
+        self.assertIn('Enabled HTTP booking journey', patient.call('/patient/appointments')[1])
+        self.assertEqual(patient.call('/appointments', body)[0], 409)
+        stranger = Client(base)
+        stranger.login('patient', self.run)
+        self.assertEqual(stranger.call(f'/patient/appointments/{appointment_id}/confirmation')[0], 404)
+        self.assertEqual(stranger.call('/api/appointments/cancel', {'appointment_id': appointment_id}, method='POST', csrf=stranger.token('/patient/profile'))[0], 403)
+        otherdoctor = Client(base)
+        otherdoctor.login('otherdoctor', self.run)
+        self.assertEqual(otherdoctor.call(f'/api/appointments/{appointment_id}', {'status': 'Completed'}, method='PUT', csrf=otherdoctor.token('/doctor/dashboard'))[0], 403)
+        doctor = Client(base)
+        doctor.login('doctor', self.run)
+        self.assertEqual(doctor.call(f'/api/appointments/{appointment_id}', {'status': 'Completed'}, method='PUT', csrf=doctor.token('/doctor/dashboard'))[0], 200)
+
+    def test_z_login_throttling_unknown_account(self):
+        # Last test: shared loopback IP budget intentionally retained throughout the suite.
+        client = Client(self.base)
+        body = {'_csrf': client.token(), 'email': f'unknown-{self.run}@example.test', 'password': 'wrong'}
+        for _ in range(5):
+            self.assertEqual(client.call('/login', body)[0], 422)
+        result = client.call('/login', body)
+        self.assertEqual(result[0], 429)
+        self.assertGreater(int(result[2]['Retry-After']), 0)
+        self.assertIn('Sign-in temporarily unavailable.', result[1])
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

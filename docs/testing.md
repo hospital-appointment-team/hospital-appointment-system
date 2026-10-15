@@ -34,4 +34,14 @@ Once approved PHP/MySQL tools are available, run lint, `php tests/run.php`, `php
 
 ## Remaining verification limits
 
-The database schema has not been imported or executed. Static contract checks and JS tests do not establish end-to-end correctness. Audit-file writes and database commits are separate resources; request logs may outlive failed transactions. Slot-duration changes need an agreed migration policy because the specified schema stores no duration. Existing unconfigured schedules display stored bookings without inventing slot times.
+The database schema has not been imported or executed. Static contract checks and JS tests do not establish end-to-end correctness. Audit-file writes and database commits are separate resources; request logs may outlive failed transactions. Slot-duration changes are blocked by the approved protected baseline; legacy bookings without a baseline require deliberate recovery. Existing unconfigured schedules display stored bookings without inventing slot times.
+
+## Review remediation coverage (authored, runtime execution pending)
+
+`tests/run.php` includes actual rendered edit/profile forms, duration freeze and adjacent-interval rules, account/IP limits, backoff/expiry, corrupt state and concurrent success-reservation handling. It requires PHP but no database.
+
+`tests/integration.php` requires a NEW empty MySQL 8 database ending in `_test`, the supplied schema, TEST_DB_FRESH_CONFIRM=true, and PHP with PDO MySQL/mbstring and proc_open enabled. It covers duration drift, adjacent slots, two-doctor ownership, overlap, simultaneous booking, new-booking versus cancelled-appointment reactivation, and concurrent cancellation/confirmation. Workers use independent database connections and a start gate; repeat races on the target MySQL/server environment before deployment.
+
+`python tests/http_smoke.py` requires a DIFFERENT new empty `_test` database and PHP on PATH. It starts loopback servers with explicit fixture-only hours/duration, temporary private state and auth storage. Tests exercise successful booking POST/confirmation, duplicate conflict, patient/doctor ownership, enabled and disabled booking, rendered form values and specialization edit action/ID, PNG uploads at 2 MB and above the limit, and unknown-account throttling. The fixture server sets upload_max_filesize=3M and post_max_size=8M so application size validation is reached. These are HTTP tests, not live browser or visual verification. Missing prerequisites skip the suite with zero tests executed.
+
+No suite provisions, drops or migrates a database. Have an authorized operator create a unique empty database and import database/schema.sql before each suite, following setup.md; never reuse an existing database. No local credentials belong in Git. Real mobile/desktop interaction, rendering, proxy IP behavior, shared-storage locking and concurrent requests still need verification in an approved environment.

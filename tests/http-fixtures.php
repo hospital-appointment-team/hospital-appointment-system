@@ -17,10 +17,13 @@ if ($action === 'setup') {
     \Hospital\Services\DurationPolicy::synchronized(static fn () => \Hospital\Services\DurationPolicy::verify(30, true));
     $ids = [];
     foreach (['admin','doctor','patient'] as $role) $ids[$role] = User::create(['name'=>"HTTP $role",'email'=>$email($role),'password'=>'Http-test-only-839!','dob'=>'1990-01-01','phone'=>'01234567890','blood_group'=>'O+'],$role);
+    foreach (['journey'=>'patient','otherdoctor'=>'doctor'] as $label=>$role) $ids[$label] = User::create(['name'=>"HTTP $label",'email'=>$email($label),'password'=>'Http-test-only-839!','dob'=>'1990-01-01','phone'=>'01234567890','blood_group'=>'O+'],$role);
     Model::query('INSERT INTO specializations (name) VALUES (?)',["HTTP $run"]);
     $specialization = (int) Database::connection()->lastInsertId();
     Model::query('INSERT INTO doctors (user_id,specialization_id,bio,consultation_fee,available_days) VALUES (?,?,?,?,?)',[$ids['doctor'],$specialization,'HTTP fixture doctor','500.00','Monday,Tuesday,Wednesday,Thursday,Friday']);
     $ids['doctor_profile'] = (int) Database::connection()->lastInsertId();
+    Model::query('INSERT INTO doctors (user_id,specialization_id,bio,consultation_fee,available_days) VALUES (?,?,?,?,?)',[$ids['otherdoctor'],$specialization,'Second HTTP fixture doctor','500.00','Monday,Tuesday,Wednesday,Thursday,Friday']);
+    $ids['otherdoctor_profile'] = (int) Database::connection()->lastInsertId();
     $ids['specialization'] = $specialization;
     foreach (['09:00','09:30'] as $index => $time) {
         Model::query("INSERT INTO appointments (patient_id,doctor_id,appointment_date,appointment_time,reason,status) VALUES (?,?,?,?,?,'Pending')",[$ids['patient'],$ids['doctor_profile'],date('Y-m-d'),$time,'HTTP test fixture']);

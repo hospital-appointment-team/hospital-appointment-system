@@ -41,7 +41,7 @@ No actual clinic hours or duration are assumed. Only full slots that fit before 
 
 All statuses except `Cancelled` reserve their appointment interval. Cancelled slots may be rebooked. Booking and status changes lock the doctor row, then revalidate conflicts with locking reads inside an InnoDB transaction. This protects requests using this application; direct database writers must follow the same protocol.
 
-The required schema has no per-appointment duration. Overlap checks use the current configured duration for existing appointments too. Do not change duration while existing bookings need a different duration; agree a migration strategy first. Overnight hours, per-doctor durations, and schedule exceptions are not specified and are not assumed.
+The required schema has no per-appointment duration. The protected baseline enforces the original duration for existing appointments and blocks configured duration changes. A deliberate migration is needed to change it. Overnight hours, per-doctor durations, and schedule exceptions are not specified and are not assumed.
 
 Availability edits affect future booking options; they preserve existing appointments. Admin reactivation of a cancelled Pending/Confirmed reservation must fit current availability and must not conflict.
 
@@ -50,6 +50,8 @@ Any Cancelled-to-reserving transition requires valid configured duration and a c
 Duration is now frozen by a protected, durable per-database baseline before the first insert. Changed/missing legacy/corrupt baselines fail closed. Configure shared STATE_STORAGE_DIR for multiple hosts and back it up with the database. See [duration-policy.md](duration-policy.md) for locking, recovery, and deliberately conservative failure semantics.
 
 ## Cancellation audit
+
+Login limits require protected durable AUTH_THROTTLE_DIR storage shared by all app hosts. See [login-throttling.md](login-throttling.md) for limits, proxy configuration, permissions and failure behavior.
 
 Admin cancellations require a reason. The approved file approach saves it under `storage/audit/cancellations.jsonl`, outside `public/` and excluded from Git. The patient visit reason is preserved. Give only the application service account and authorized administrators access (use NTFS ACLs on Windows). Back up and retain the file according to the hospital's approved policy.
 

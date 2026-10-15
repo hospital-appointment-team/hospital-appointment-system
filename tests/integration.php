@@ -17,7 +17,7 @@ use Hospital\Core\HttpException;
 use Hospital\Models\{Database, Doctor, Model, User};
 use Hospital\Services\{AppointmentStatusService, AvailabilityService, BookingService};
 
-$users = []; $doctorId = null; $specializationId = null; $checks = 0;
+$users = []; $doctorId = null; $secondDoctorId = null; $specializationId = null; $checks = 0;
 $check = static function (bool $result, string $message) use (&$checks): void {
     $checks++;
     if (!$result) throw new RuntimeException($message);
@@ -34,7 +34,7 @@ try {
     }
     Model::query('INSERT INTO specializations (name) VALUES (?)', ['Test ' . $suffix]);
     $specializationId = (int) Database::connection()->lastInsertId();
-    foreach (['patient','patient','doctor','admin'] as $index => $role) {
+    foreach (['patient','patient','doctor','admin','doctor'] as $index => $role) {
         $users[] = User::create(['name' => "Test $role",'email' => "$index-$suffix@example.test",'password' => 'Test-only-password-492','dob' => '1990-01-01','blood_group' => 'O+','phone' => '+8801700000000'], $role);
     }
     $patient = User::find($users[0]);
@@ -44,12 +44,17 @@ try {
     $check(User::find($users[0])['name'] === 'Updated patient', 'Profile fields persist');
     Model::query('INSERT INTO doctors (user_id,specialization_id,bio,consultation_fee,available_days) VALUES (?,?,?,?,?)', [$users[2],$specializationId,'Test doctor','500.00','Monday,Tuesday,Wednesday,Thursday,Friday']);
     $doctorId = (int) Database::connection()->lastInsertId();
+    Model::query('INSERT INTO doctors (user_id,specialization_id,bio,consultation_fee,available_days) VALUES (?,?,?,?,?)', [$users[4],$specializationId,'Other doctor','500.00','Monday,Tuesday,Wednesday,Thursday,Friday']);
+    $secondDoctorId = (int) Database::connection()->lastInsertId();
     try { Model::query('DELETE FROM specializations WHERE id=?', [$specializationId]); $check(false, 'Assigned specialization must not delete'); }
     catch (PDOException $exception) { $check($exception->getCode() === '23000', 'Foreign key protects assigned specialization'); }
     $doctor = Doctor::find($doctorId); $date = null;
     foreach (AvailabilityService::dates($doctor) as $candidate => $eligible) if ($eligible && new DateTimeImmutable($candidate . ' 09:00') > new DateTimeImmutable()) { $date = $candidate; break; }
     $check($date !== null, 'Future eligible test date exists');
     $id = BookingService::book($users[0],$doctorId,$date,'09:00','Test visit');
+    $expect(fn () => AppointmentStatusService::update(User::find($users[4]),$id,'Completed'),403);
+    $secondId = BookingService::book($users[0],$secondDoctorId,$date,'09:00','Different doctor same time');
+    $check($secondId !== $id, 'Two doctors can reserve the same time independently');
     putenv('SLOT_MINUTES=15');
     $expect(fn () => AvailabilityService::slots($doctor,$date),503);
     $expect(fn () => BookingService::book($users[1],$doctorId,$date,'09:15','Duration drift must fail'),503);
@@ -97,11 +102,49 @@ try {
         foreach ($jobs as [$process,$pipes]) { if (is_resource($process)) proc_terminate($process); foreach ($pipes as $pipe) if (is_resource($pipe)) fclose($pipe); if (is_resource($process)) proc_close($process); }
         if (is_file($gate)) unlink($gate);
     }
+    // A cancelled interval is contested by reactivation and a new booking.
+    $raceId = BookingService::book($users[0],$doctorId,$date,'10:00','Reactivation race');
+    AppointmentStatusService::update(User::find($users[0]),$raceId,'Cancelled');
+    $race = static function (array $commands) use ($check): array {
+        $gate = tempnam(sys_get_temp_dir(),'hospital-status-gate-'); unlink($gate); $jobs = [];
+        try {
+            foreach ($commands as $arguments) {
+                $arguments[4] = $gate;
+                $pipes = [];
+                $process = proc_open(array_merge([PHP_BINARY,__DIR__.'/booking-worker.php'],$arguments),[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,BASE_PATH);
+                if (!is_resource($process)) throw new RuntimeException('Cannot start race worker.');
+                fclose($pipes[0]); $jobs[] = [$process,$pipes];
+            }
+            touch($gate); $results = [];
+            foreach ($jobs as [$process,$pipes]) {
+                $results[] = stream_get_contents($pipes[1]); fclose($pipes[1]); stream_get_contents($pipes[2]); fclose($pipes[2]);
+                $check(proc_close($process) === 0, 'Status race worker exits successfully');
+            }
+            $jobs = []; sort($results); return $results;
+        } finally {
+            foreach ($jobs as [$process,$pipes]) { if (is_resource($process)) proc_terminate($process); foreach ($pipes as $pipe) if (is_resource($pipe)) fclose($pipe); if (is_resource($process)) proc_close($process); }
+            if (is_file($gate)) unlink($gate);
+        }
+    };
+    $results = $race([
+        [(string)$users[3],(string)$doctorId,$date,'10:00','', 'restore',(string)$raceId],
+        [(string)$users[1],(string)$doctorId,$date,'10:00','', 'book','0'],
+    ]);
+    $check($results === ['booked','conflict'] || $results === ['conflict','restored'], 'Exactly one new booking or reactivation succeeds');
+    $check((int) Model::query("SELECT COUNT(*) FROM appointments WHERE doctor_id=? AND appointment_date=? AND appointment_time='10:00' AND status<>'Cancelled'",[$doctorId,$date])->fetchColumn() === 1, 'Reactivation race preserves one reservation');
+    $cancelRaceId = BookingService::book($users[0],$doctorId,$date,'10:30','Cancellation/reactivation race');
+    $results = $race([
+        [(string)$users[3],(string)$doctorId,$date,'10:30','', 'cancel',(string)$cancelRaceId],
+        [(string)$users[3],(string)$doctorId,$date,'10:30','', 'restore',(string)$cancelRaceId],
+    ]);
+    $check($results === ['cancelled','restored'], 'Concurrent cancellation and confirmation serialize successfully');
+    $check(in_array(Model::query('SELECT status FROM appointments WHERE id=?',[$cancelRaceId])->fetchColumn(),['Cancelled','Confirmed'],true), 'Final race status follows one serialized ordering');
     echo "$checks integration checks passed.\n";
 } catch (Throwable $exception) {
     fwrite(STDERR,'Integration suite failed: ' . get_class($exception) . ". Check local test configuration.\n"); $exit = 1;
 } finally {
     if ($doctorId !== null) { Model::query('DELETE FROM appointments WHERE doctor_id=?',[$doctorId]); Model::query('DELETE FROM doctors WHERE id=?',[$doctorId]); }
+    if ($secondDoctorId !== null) { Model::query('DELETE FROM appointments WHERE doctor_id=?',[$secondDoctorId]); Model::query('DELETE FROM doctors WHERE id=?',[$secondDoctorId]); }
     if ($specializationId !== null) Model::query('DELETE FROM specializations WHERE id=?',[$specializationId]);
     foreach ($users as $userId) Model::query('DELETE FROM users WHERE id=?',[$userId]);
     $temporaryRoot = realpath(sys_get_temp_dir()) . DIRECTORY_SEPARATOR;
