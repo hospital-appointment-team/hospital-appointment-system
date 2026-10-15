@@ -72,6 +72,7 @@ $check(AvailabilityService::eligible($fixtureDoctor, '2026-10-16', '09:30', $fix
 $check(!AvailabilityService::eligible($fixtureDoctor, '2026-10-17', '09:30', $fixtureNow), 'Unavailable weekday rejected');
 require __DIR__ . '/view-rendering.php';
 (require __DIR__ . '/duration-policy.php')($check);
+(require __DIR__ . '/login-throttle.php')($check);
 session_destroy();
 
 foreach ($failures as $failure) {

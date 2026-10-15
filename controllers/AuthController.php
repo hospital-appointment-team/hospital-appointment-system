@@ -4,6 +4,7 @@ namespace Hospital\Controllers;
 
 use Hospital\Core\{Auth, Controller, Request, Validation};
 use Hospital\Models\User;
+use Hospital\Services\LoginThrottle;
 
 final class AuthController extends Controller
 {
@@ -36,6 +37,13 @@ final class AuthController extends Controller
             $body = Request::body();
             $data['email'] = Request::text($body, 'email');
             $password = is_string($body['password'] ?? null) ? $body['password'] : '';
+            $reservation = LoginThrottle::reserve($data['email']);
+            if (!$reservation['allowed']) {
+                header('Retry-After: ' . $reservation['retry']);
+                $errors['login'] = 'Sign-in temporarily unavailable. Please try again later.';
+                $this->view('auth/login', compact('errors', 'data') + ['title' => 'Sign in'], 429);
+                return;
+            }
             $user = User::byEmail($data['email']);
             // A fixed valid hash keeps missing-user verification on the password-hashing path.
             $hash = $user['password_hash'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
@@ -45,6 +53,7 @@ final class AuthController extends Controller
             } elseif (!(bool) $user['is_active']) {
                 $errors['login'] = 'Your account has been deactivated. Contact admin.';
             } else {
+                LoginThrottle::success($reservation);
                 Auth::login($user);
                 $this->redirect(Auth::home($user['role']));
             }

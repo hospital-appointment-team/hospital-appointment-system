@@ -1,0 +1,11 @@
+# Login attempt limits
+
+Every login POST reserves an attempt before looking up the account or verifying its password. Account keys normalize email case and whitespace. Five attempts per account are initially permitted in a fixed fifteen-minute window. Subsequent attempts require delays of 30, 60, 120, 240, 480, then 900 seconds, bounded by window expiry. Blocked attempts do not extend the window. Each source IP can submit fifty requests in fifteen minutes, across all accounts, including requests blocked by account limits. Successful authentication clears only the latest account reservation; it never clears the IP budget or a newer concurrent reservation.
+
+Blocked requests return a generic HTTP 429 message and Retry-After without querying whether the account exists. Existing-account password failures and unknown accounts share the same policy. This finite account lockout can temporarily affect a targeted legitimate user; there is no permanent lockout.
+
+Only REMOTE_ADDR is used, with canonical IP formatting. Forwarded and X-Forwarded-For headers are ignored. Deployments behind a trusted reverse proxy must configure the web server to rewrite REMOTE_ADDR using an explicit trusted proxy allowlist. Otherwise all proxy traffic shares one limit. Never enable unrestricted client header trust.
+
+The existing schema has no attempt timestamps or IP counters. No schema or dependency is added: locked JSON state lives in storage/auth or AUTH_THROTTLE_DIR, outside public/. All app hosts must share a durable directory with working exclusive file locks. Restrict access to the service account using filesystem permissions (including NTFS ACLs on Windows); hashes of account/IP identifiers are stored, not passwords or raw identifiers. Protect and retain this state across restarts. Deleting it resets limits. Corrupt, oversized, unavailable or full state fails closed with HTTP 503. The cap is 10,000 active account/IP buckets. Expired buckets are removed on the next attempt.
+
+Run `php tests/run.php` for deterministic account, IP, backoff, expiry and forwarded-header tests. PHP tests require an installed PHP runtime; source checks alone do not validate execution or filesystem concurrency.

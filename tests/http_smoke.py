@@ -60,6 +60,9 @@ class HospitalHTTP(unittest.TestCase):
         cls.private_state = tempfile.TemporaryDirectory(prefix='hospital-http-state-')
         cls.addClassCleanup(cls.private_state.cleanup)
         cls.env = os.environ.copy()
+        cls.auth_storage = tempfile.TemporaryDirectory(prefix='hospital-http-auth-')
+        cls.addClassCleanup(cls.auth_storage.cleanup)
+        cls.env['AUTH_THROTTLE_DIR'] = cls.auth_storage.name
         cls.run = secrets.token_hex(8)
         cls.env.update(DB_DATABASE=DATABASE, HTTP_TEST_RUN=cls.run, APP_ENV='local', SESSION_SECURE='false', BOOKING_POLICY_CONFIRMED='false', STATE_STORAGE_DIR=cls.private_state.name, SLOT_MINUTES='30', CLINIC_OPEN='09:00', CLINIC_CLOSE='12:00')
         cls.hidden = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
