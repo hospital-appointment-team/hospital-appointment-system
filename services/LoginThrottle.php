@@ -69,23 +69,39 @@ final class LoginThrottle
         $public = str_replace('\\', '/', (string) realpath(BASE_PATH . '/public'));
         if ($root === '' || str_starts_with(strtolower($root) . '/', strtolower($public) . '/')) throw new HttpException(503, 'Sign-in temporarily unavailable.');
         $path = $directory . '/login-attempts.json';
-        $file = fopen($path, 'c+b');
+        // Lock a stable inode: replacing the state file must not replace the mutex.
+        $file = fopen($directory . '/login-attempts.lock', 'c+b');
         if ($file === false) throw new HttpException(503, 'Sign-in temporarily unavailable.');
+        chmod($directory . '/login-attempts.lock', 0600);
+        $temporary = null;
         try {
             if (!flock($file, LOCK_EX)) throw new \RuntimeException('Lock unavailable');
-            if (fstat($file)['size'] > 8388608) throw new \RuntimeException('State too large');
-            $raw = stream_get_contents($file);
-            if ($raw === false) throw new \RuntimeException('Read failed');
-            $state = $raw === '' ? [] : json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            clearstatcache(true, $path);
+            if (is_file($path)) {
+                if (filesize($path) > 8388608) throw new \RuntimeException('State too large');
+                $raw = file_get_contents($path);
+                if ($raw === false) throw new \RuntimeException('Read failed');
+                // An existing empty file is corruption, never a fresh counter window.
+                $state = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } else $state = [];
             if (!is_array($state)) throw new \RuntimeException('Invalid state');
             [$updated, $result] = $callback($state);
             $encoded = json_encode($updated, JSON_THROW_ON_ERROR);
-            if (!rewind($file) || !ftruncate($file, 0) || fwrite($file, $encoded) !== strlen($encoded) || !fflush($file) || !fsync($file)) throw new \RuntimeException('Write failed');
-            chmod($path, 0600);
+            $temporary = tempnam($directory, '.login-');
+            if ($temporary === false) throw new \RuntimeException('Temporary state unavailable');
+            chmod($temporary, 0600);
+            $output = fopen($temporary, 'wb');
+            if ($output === false) throw new \RuntimeException('Temporary state unavailable');
+            try {
+                if (fwrite($output, $encoded) !== strlen($encoded) || !fflush($output) || !fsync($output)) throw new \RuntimeException('Write failed');
+            } finally { fclose($output); }
+            if (!rename($temporary, $path)) throw new \RuntimeException('Atomic replacement failed');
+            $temporary = null;
             return $result;
         } catch (\Throwable $error) {
             throw new HttpException(503, 'Sign-in temporarily unavailable.');
         } finally {
+            if (is_string($temporary) && is_file($temporary)) unlink($temporary);
             flock($file, LOCK_UN);
             fclose($file);
         }

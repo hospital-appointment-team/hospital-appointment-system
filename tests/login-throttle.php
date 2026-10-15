@@ -38,9 +38,13 @@ return static function (callable $check): void {
         file_put_contents($directory . '/login-attempts.json', '{corrupt');
         try { $class::reserve('another@example.test'); $check(false, 'Invalid persisted JSON rejected'); }
         catch (\Hospital\Core\HttpException $error) { $check($error->status === 503, 'Invalid persisted JSON fails closed'); }
+        file_put_contents($directory . '/login-attempts.json', '');
+        try { $class::reserve('another@example.test'); $check(false, 'Empty existing file rejected'); }
+        catch (\Hospital\Core\HttpException $error) { $check($error->status === 503, 'Empty existing file fails closed'); }
     } finally {
         putenv($previous === false ? 'AUTH_THROTTLE_DIR' : 'AUTH_THROTTLE_DIR=' . $previous);
         if (is_file($directory . '/login-attempts.json')) unlink($directory . '/login-attempts.json');
+        if (is_file($directory . '/login-attempts.lock')) unlink($directory . '/login-attempts.lock');
         if (is_dir($directory)) rmdir($directory);
     }
 };
