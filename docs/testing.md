@@ -2,6 +2,8 @@
 
 Runtime dependencies are absent in the inspected environment. PHP syntax checks, PHP unit/service tests, MySQL integration/concurrency tests, HTTP acceptance, and live browser/layout verification are NOT reported as passed. See the final development report for actual checks run.
 
+Renderer remediation: `php tests/view-rendering.php` exercises actual profile, doctor, validation-recovery, and specialization-edit HTML without a database, including escaping and reserved renderer locals. It is also included in `php tests/run.php`. These PHP regression tests are authored but unrun while PHP is unavailable.
+
 Available dependency-free checks:
 
 - `node --check public/assets/js/app.js`

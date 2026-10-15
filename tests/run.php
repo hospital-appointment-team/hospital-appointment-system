@@ -70,6 +70,7 @@ $check(!AvailabilityService::eligible($fixtureDoctor, '2026-10-16', '09:00', $fi
 $check(!AvailabilityService::eligible($fixtureDoctor, '2026-10-16', '09:15', $fixtureNow), 'Off-grid slot rejected');
 $check(AvailabilityService::eligible($fixtureDoctor, '2026-10-16', '09:30', $fixtureNow), 'Future aligned slot accepted');
 $check(!AvailabilityService::eligible($fixtureDoctor, '2026-10-17', '09:30', $fixtureNow), 'Unavailable weekday rejected');
+require __DIR__ . '/view-rendering.php';
 session_destroy();
 
 foreach ($failures as $failure) {

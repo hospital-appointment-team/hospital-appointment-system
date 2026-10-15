@@ -4,17 +4,24 @@ namespace Hospital\Core;
 
 abstract class Controller
 {
-    protected function view(string $template, array $data = [], int $status = 200): void
+    protected function view(string $template, array $viewVariables = [], int $status = 200): void
     {
         http_response_code($status);
         $currentUser = Auth::user();
         $e = [Security::class, 'escape'];
         $flash = $_SESSION['flash'] ?? null;
         unset($_SESSION['flash']);
-        extract($data, EXTR_SKIP);
+        // Templates intentionally receive a variable named $data for form values.
+        // Keep renderer locals reserved while allowing that expected template variable.
+        extract($viewVariables, EXTR_SKIP);
         ob_start();
-        require BASE_PATH . '/views/' . $template . '.php';
-        $content = ob_get_clean();
+        try {
+            require BASE_PATH . '/views/' . $template . '.php';
+            $content = ob_get_clean();
+        } catch (\Throwable $renderException) {
+            ob_end_clean();
+            throw $renderException;
+        }
         require BASE_PATH . '/views/layout.php';
     }
 
