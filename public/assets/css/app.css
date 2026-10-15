@@ -1,0 +1,11 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #183246; background: #f2f6f8; }
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.6; }
+.header { padding: 1rem max(1rem, calc((100vw - 1120px) / 2)); background: #fff; border-bottom: 1px solid #d9e3e8; }
+.brand { color: #086c69; font-weight: 750; text-decoration: none; }
+.container { max-width: 1120px; margin: 3rem auto; padding: 0 1rem; }
+.card { background: #fff; border: 1px solid #d9e3e8; border-radius: 1rem; padding: clamp(1.25rem, 5vw, 3rem); }
+.eyebrow { color: #086c69; font-weight: 700; }
+h1 { font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.2; max-width: 20ch; }
+p { max-width: 65ch; }
+a:focus-visible { outline: 3px solid #0c7c86; outline-offset: 4px; }
