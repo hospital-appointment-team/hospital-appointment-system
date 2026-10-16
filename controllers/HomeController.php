@@ -17,14 +17,4 @@ final class HomeController extends Controller
         Auth::requireRole('admin');
         $this->view('admin/home', ['title' => 'Hospital overview']);
     }
-    public function patient(): void
-    {
-        Auth::requireRole('patient');
-        $this->view('home', ['title' => 'Patient home']);
-    }
-    public function doctor(): void
-    {
-        Auth::requireRole('doctor');
-        $this->view('home', ['title' => 'Doctor home']);
-    }
 }

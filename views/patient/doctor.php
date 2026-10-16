@@ -1,0 +1,10 @@
+<?php use Hospital\Core\Form; ?>
+<a href="/patient">← All doctors</a><div class="split profile-grid"><section class="card"><?php if ($doctor['photo_path']): ?><img class="avatar" src="<?= $e($doctor['photo_path']) ?>" alt="<?= $e($doctor['name']) ?>"><?php endif; ?><p class="eyebrow"><?= $e($doctor['specialization']) ?></p><h1><?= $e($doctor['name']) ?></h1><p class="prewrap"><?= $e($doctor['bio']) ?></p><p>Consultation fee: <strong><?= $e($doctor['consultation_fee']) ?></strong></p><p>Available: <?= $e($doctor['available_days'] ?: 'No weekdays set') ?></p></section>
+<section class="card" data-booking-doctor="<?= (int) $doctor['id'] ?>"><h2>Choose your appointment</h2>
+<?php Form::error('booking', $errors); ?>
+<div class="date-options" aria-label="Next seven days"><?php foreach ($dates as $date => $eligible): ?><button type="button" class="secondary date-choice" data-date="<?= $date ?>" aria-pressed="false" <?= $eligible ? '' : 'disabled' ?>><?= $e(date('D, M j', strtotime($date))) ?></button><?php endforeach; ?></div>
+<p id="slot-message" role="status">Choose an available day to see times.</p><div id="slot-options" class="slot-options" aria-label="Available appointment times"></div>
+<form method="post" action="/appointments" id="booking-form"><?php Form::csrf(); ?><input type="hidden" name="doctor_id" value="<?= (int) $doctor['id'] ?>">
+<div class="field"><label for="appointment_date">Selected date</label><input type="text" id="appointment_date" name="appointment_date" value="<?= $e($data['appointment_date'] ?? '') ?>" readonly required></div>
+<div class="field"><label for="appointment_time">Selected time</label><input type="text" id="appointment_time" name="appointment_time" value="" readonly required></div>
+<?php Form::field('reason', 'Reason for visit', $data, $errors, 'textarea'); ?><button id="book-submit" disabled>Request appointment</button><p class="muted">Your appointment starts as Pending. Availability is checked again when you submit.</p></form></section></div>
