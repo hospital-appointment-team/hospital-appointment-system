@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="620" viewBox="0 0 600 620" role="img" aria-labelledby="title desc">
+<title id="title">Hospital Appointment System</title>
+<desc id="desc">Original project illustration. Moving states and particles explain a workflow, not live service status or measured test results.</desc>
+<defs><linearGradient id="bg"><stop stop-color="#030705" /><stop offset="1" stop-color="#11261d" /></linearGradient><radialGradient id="aura"><stop stop-color="#28c797" stop-opacity=".22" /><stop offset="1" stop-color="#28c797" stop-opacity="0" /></radialGradient><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#73f0ca" opacity=".12" /></pattern><clipPath id="frame"><rect x="1" y="1" width="598" height="618" rx="12" /></clipPath></defs><g clip-path="url(#frame)"><rect width="600" height="620" fill="url(#bg)" /><ellipse cx="491.99999999999994" cy="279.0" rx="450" ry="400" fill="url(#aura)" /><rect width="600" height="620" fill="url(#dots)" /></g><rect x="1" y="1" width="598" height="618" rx="12" fill="none" stroke="#2d735e" />
+<text x="28" y="42" font-family="Consolas,Courier New,monospace" font-size="14" fill="#7bf0cd" font-weight="600">PROJECT / HOSPITAL</text>
+<text x="28" y="95" font-family="Segoe UI,Arial,sans-serif" font-size="31" fill="#f0f7f3" font-weight="700">Hospital Appointment System</text>
+<text x="28" y="132" font-family="Segoe UI,Arial,sans-serif" font-size="19" fill="#afdccf" font-weight="400">Team project · authentication</text>
+<rect x="28" y="166" width="544" height="250" rx="10" fill="#11261d" stroke="#2b715c" />
+<rect x="48" y="183" width="504" height="55" rx="10" fill="#0d1d16" stroke="#2b715c" />
+<text x="70" y="217" font-family="Consolas,Courier New,monospace" font-size="19" fill="#baf0e0" font-weight="600">SIGN IN</text>
+<rect x="48" y="256" width="504" height="55" rx="10" fill="#0d1d16" stroke="#2b715c" />
+<text x="70" y="290" font-family="Consolas,Courier New,monospace" font-size="19" fill="#baf0e0" font-weight="600">ROLE CHECK</text>
+<rect x="48" y="329" width="504" height="55" rx="10" fill="#0d1d16" stroke="#2b715c" />
+<text x="70" y="363" font-family="Consolas,Courier New,monospace" font-size="19" fill="#baf0e0" font-weight="600">DOCTOR ADMIN</text>
+<path d="M534 186V384" fill="none" stroke="#297d64" stroke-width="1.4" />
+<text x="28" y="476" font-family="Consolas,Courier New,monospace" font-size="16" fill="#95f0d4" font-weight="600">PATIENT AUTH + DOCTOR ADMINISTRATION</text>
+<text x="28" y="514" font-family="Consolas,Courier New,monospace" font-size="17" fill="#a7d6c8" font-weight="400">Booking / dashboards: wider team work</text>
+<path d="M28 540H572" fill="none" stroke="#2b715c" stroke-width="1.4" />
+<text x="28" y="573" font-family="Consolas,Courier New,monospace" font-size="14" fill="#94e0c9" font-weight="400">PHP  /  MYSQL  /  JAVASCRIPT</text>
+<text x="28" y="602" font-family="Consolas,Courier New,monospace" font-size="11" fill="#7fb2a3" font-weight="400">PROJECT WORKFLOW / ILLUSTRATION</text>
+<defs><clipPath id="cyber-frame"><rect x="2" y="2" width="596" height="616" rx="12" /></clipPath><linearGradient id="edge-blue"><stop stop-color="#41f0bb" /><stop offset=".5" stop-color="#24a17c" /><stop offset="1" stop-color="#7df0b2" /></linearGradient><filter id="packet-glow"><feGaussianBlur stdDeviation="5" /></filter></defs>
+<g clip-path="url(#cyber-frame)">
+<g opacity=".25" font-family="Consolas,Courier New,monospace" font-size="11" fill="#53f0c1">
+<text x="588" y="0">01</text>
+<text x="588" y="-21">{}</text>
+<text x="588" y="-42">10</text>
+<text x="588" y="-63">//</text>
+<text x="588" y="-84">01</text>
+</g>
+<g opacity=".25" font-family="Consolas,Courier New,monospace" font-size="11" fill="#53f0c1">
+<text x="569" y="0">01</text>
+<text x="569" y="-21">{}</text>
+<text x="569" y="-42">10</text>
+<text x="569" y="-63">//</text>
+<text x="569" y="-84">01</text>
+</g>
+<g opacity=".25" font-family="Consolas,Courier New,monospace" font-size="11" fill="#53f0c1">
+<text x="550" y="0">01</text>
+<text x="550" y="-21">{}</text>
+<text x="550" y="-42">10</text>
+<text x="550" y="-63">//</text>
+<text x="550" y="-84">01</text>
+</g>
+<g opacity=".25" font-family="Consolas,Courier New,monospace" font-size="11" fill="#53f0c1">
+<text x="531" y="0">01</text>
+<text x="531" y="-21">{}</text>
+<text x="531" y="-42">10</text>
+<text x="531" y="-63">//</text>
+<text x="531" y="-84">01</text>
+</g>
+<g opacity=".25" font-family="Consolas,Courier New,monospace" font-size="11" fill="#53f0c1">
+<text x="512" y="0">01</text>
+<text x="512" y="-21">{}</text>
+<text x="512" y="-42">10</text>
+<text x="512" y="-63">//</text>
+<text x="512" y="-84">01</text>
+</g>
+<g opacity=".25" font-family="Consolas,Courier New,monospace" font-size="11" fill="#53f0c1">
+<text x="493" y="0">01</text>
+<text x="493" y="-21">{}</text>
+<text x="493" y="-42">10</text>
+<text x="493" y="-63">//</text>
+<text x="493" y="-84">01</text>
+</g>
+</g>
+<path d="M2 38V12Q2 2 12 2H48" fill="none" stroke="url(#edge-blue)" stroke-width="2" />
+<path d="M552 2H588Q598 2 598 12V38" fill="none" stroke="url(#edge-blue)" stroke-width="2" />
+<path d="M2 582V608Q2 618 12 618H48" fill="none" stroke="url(#edge-blue)" stroke-width="2" />
+<path d="M552 618H588Q598 618 598 608V582" fill="none" stroke="url(#edge-blue)" stroke-width="2" />
+<defs><filter id="object-glow"><feGaussianBlur stdDeviation="4"/></filter></defs>
+<g transform="translate(550 40)"><g>
+<rect x="-20" y="-15" width="40" height="30" rx="8" fill="#0a211a" stroke="#43c69c"/><text x="0" y="6" text-anchor="middle" font-family="Consolas,Courier New,monospace" font-size="17" fill="#e3fff1">&lt;/&gt;</text></g></g>
+</svg>
