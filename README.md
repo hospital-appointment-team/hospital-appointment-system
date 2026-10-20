@@ -1,3 +1,10 @@
+<!-- antora-terminal:start -->
+<p align="center">
+  <img src=".github/antora/terminal.svg" width="100%" alt="HOSPITAL APPOINTMENTS — decorative animated code rain and moving circuit packets. PHP / MySQL / JavaScript / team contribution." />
+</p>
+<sub>Decorative SVG motion · matching Antora developer workspace theme · reduced-motion support</sub>
+<!-- antora-terminal:end -->
+
 <!-- BEGIN animated project showcase -->
 **Organization project:** [hospital-appointment-team](https://github.com/hospital-appointment-team) · [View on Rifatur’s profile](https://github.com/rifatur17#organization-project)
 
