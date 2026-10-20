@@ -1,3 +1,14 @@
+<!-- BEGIN animated project showcase -->
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (max-width: 600px)" srcset=".github/showcase/still-overview-mobile.svg">
+  <source media="(prefers-reduced-motion: reduce)" srcset=".github/showcase/still-overview.svg">
+  <source media="(max-width: 600px)" srcset=".github/showcase/overview-mobile.svg">
+  <img src=".github/showcase/overview.svg" width="1200" alt="Hospital Appointment System — animated workflow illustration, not live telemetry.">
+</picture>
+
+**Team project:** patient authentication and doctor administration are Rifatur Rahman’s focus. Booking/dashboard contributions are team work. Feature branches and runtime-verification status are described below.
+<!-- END animated project showcase -->
+
 # hospital-appointment-system
 Full-stack Hospital Appointment Booking System built with PHP, MySQL, HTML, CSS and JavaScript.
 
