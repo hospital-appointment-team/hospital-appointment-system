@@ -2,7 +2,7 @@
 <title id="title">Hospital Appointment System</title>
 <desc id="desc">Original project illustration. Moving states and particles explain a workflow, not live service status or measured test results.</desc>
 <defs><linearGradient id="bg"><stop stop-color="#030705" /><stop offset="1" stop-color="#11261d" /></linearGradient><radialGradient id="aura"><stop stop-color="#28c797" stop-opacity=".22" /><stop offset="1" stop-color="#28c797" stop-opacity="0" /></radialGradient><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#73f0ca" opacity=".12" /></pattern><clipPath id="frame"><rect x="1" y="1" width="1198" height="508" rx="12" /></clipPath></defs><g clip-path="url(#frame)"><rect width="1200" height="510" fill="url(#bg)" /><ellipse cx="983.9999999999999" cy="229.5" rx="450" ry="400" fill="url(#aura)" /><rect width="1200" height="510" fill="url(#dots)" /></g><rect x="1" y="1" width="1198" height="508" rx="12" fill="none" stroke="#2d735e" />
-<text x="28" y="42" font-family="Consolas,Courier New,monospace" font-size="14" fill="#7bf0cd" font-weight="600">PROJECT / HOSPITAL</text>
+<text x="28" y="42" font-family="Consolas,Courier New,monospace" font-size="14" fill="#7bf0cd" font-weight="600">ORGANIZATION / HOSPITAL APPOINTMENT TEAM</text>
 <text x="28" y="95" font-family="Segoe UI,Arial,sans-serif" font-size="38" fill="#f0f7f3" font-weight="700">Hospital Appointment System</text>
 <text x="28" y="132" font-family="Segoe UI,Arial,sans-serif" font-size="22" fill="#afdccf" font-weight="400">Team project · my focus: authentication &amp; doctor administration</text>
 <rect x="28" y="166" width="1144" height="160" rx="10" fill="#11261d" stroke="#2b715c" />
